@@ -87,6 +87,18 @@ void OnConnect(base::socket_t sock, int err)
 	}
 }
 
+void OnAccept(base::socket_t sock, int err)
+{
+	if(err == -1)
+	{
+		printf("Accept fail\n");
+	}
+	else
+	{
+		printf("Accept success\n");
+	}
+}
+
 void main()
 {
 	/*
@@ -132,9 +144,12 @@ void main()
 	int i = 0;
 	*/
 
-	bas::default_thread_pool()->run();
-	base::connector_t co;
-	co.asyn_connect("10.34.43.55", 8899, base::bind(OnConnect, base::_1, base::_2), 5000);
+ 	bas::default_thread_pool()->run();
+// 	base::connector_t co;
+// 	co.asyn_connect("www.winxuan.com/product/1201111489", 80, base::bind(OnConnect, base::_1, base::_2), 5000);
+
+	base::acceptor_t acpt;
+	acpt.asyn_accept(0, 8869, bind(&OnAccept, base::_1, base::_2));
 
 	SuspendThread(GetCurrentThread());
 }

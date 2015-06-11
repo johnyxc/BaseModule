@@ -94,6 +94,7 @@ namespace bas
 				io_event_list_.push_back(evt);
 
 				event_add(evt, 0);
+				return evt;
 			}
 
 			void remove(event* evt)
