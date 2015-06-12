@@ -64,17 +64,13 @@ namespace bas
 
 		public :
 			auto_ptr() : pwt_() {}
+			~auto_ptr() { if(pwt_) pwt_->release(); }
 			auto_ptr(T* o) : pwt_(o) {}
 			auto_ptr(const auto_ptr& ap)
 			{
 				if(!ap.pwt_) return;
 				pwt_ = ap.pwt_;
 				pwt_->retain();
-			}
-			~auto_ptr()
-			{
-				if(pwt_)
-					pwt_->release();
 			}
 			auto_ptr& operator = (const auto_ptr& ap)
 			{
