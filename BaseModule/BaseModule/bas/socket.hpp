@@ -43,12 +43,42 @@ namespace bas
 
 			struct buffer
 			{
-				buffer() : buf(), len(), recv_len() {}
-				~buffer() { if(buf) delete buf; }
-				char* buf;
-				int len;
-				int recv_len;
+			public :
+				buffer() : buf_(), len_(), pro_len_(), recv_some_(), is_ref_(true) {}
+				~buffer() { if(buf_ && !is_ref_) delete buf_; }
+
+			public :
+				void buffer_alloc_buf(int len)
+				{
+					if(buf_ && !is_ref_) delete buf_;
+					buf_ = new char[len];
+					is_ref_ = false;
+				}
+
+				void buffer_set_buf(char* bf)
+				{
+					if(buf_ && !is_ref_) delete buf_;
+					buf_ = bf;
+					is_ref_ = true;
+				}
+
+				inline void buffer_set_len(int len)			{ len_ = len; }
+				inline void buffer_set_pro_len(int len)		{ pro_len_ = len; }
+				inline void buffer_set_recv_some(bool b)	{ recv_some_ = b; }
+				inline char* buffer_get_buf()				{ return buf_; }
+				inline int	buffer_get_len()				{ return len_; }
+				inline int  buffer_get_pro_len()			{ return pro_len_; }
+				inline bool buffer_get_recv_some()			{ return recv_some_; }
+				inline bool buffer_get_is_ref()				{ return is_ref_; }
+
+			private :
+				char*	buf_;		//	缓冲区
+				int		len_;		//	处理总长度
+				int		pro_len_;	//	已处理长度
+				bool	recv_some_;	//	是否部分接收
+				bool	is_ref_;	//	是否持有
 			};
+			//////////////////////////////////////////////////////////////////////////
 
 		public :
 			socket_t() : sock_() {}
@@ -60,64 +90,126 @@ namespace bas
 				sock_ = sock;
 			}
 
-			void asyn_recv(char* buf, int len, recv_callback cb)
+			void bind_error_callback(error_callback cb)
 			{
-				if(!sock_ || !buf) return;
-				
+				err_cb_ = cb;
+			}
+
+			//	异步接收（指定长度）
+			bool asyn_recv(char* buf, int len, recv_callback cb)
+			{
+				if(!sock_ || !buf) return false;
+				i_recv(buf, len, cb, false);
+				return true;
+			}
+
+			//	异步接收（缓冲区有数据立即返回）
+			bool asyn_recv_some(char* buf, int len, recv_callback cb)
+			{
+				if(!sock_ || !buf) return false;
+				i_recv(buf, len, cb, true);
+				return true;
+			}
+
+			//	异步发送
+			bool asyn_send(char* buf, int len, send_callback cb)
+			{
+				if(!sock_ || !buf) return false;
+
 				buffer* bf = new buffer;
-				bf->buf = new char[len];
-				memcpy((void*)bf->buf, (void*)buf, len);
-				bf->len = len;
+				bf->buffer_alloc_buf(len);
+				memcpy((void*)bf->buffer_get_buf(), (void*)buf, len);
+				bf->buffer_set_len(len);
+
+				//	每次调用都是一次性发送行为
+				default_thread_pool()->post(sock_, EV_WRITE, bind(&socket_t::i_on_send, this, _1, _2, bf, cb));
+
+				int bt = ::send(sock_, bf->buffer_get_buf(), bf->buffer_get_len(), 0);
+				if(bt <= 0) { delete bf; return false; }
+				bf->buffer_set_pro_len(bf->buffer_get_pro_len() + bt);
+
+				return true;
+			}
+
+		private :
+			void i_recv(char* buf, int len, recv_callback cb, bool recv_some)
+			{
+				buffer* bf = new buffer;
+				bf->buffer_set_buf(buf);
+				bf->buffer_set_len(len);
+				bf->buffer_set_recv_some(recv_some);
 
 				//	每次调用都是一次性接收行为
 				default_thread_pool()->post(sock_, EV_READ, bind(&socket_t::i_on_recv, this, _1, _2, bf, cb));
 			}
 
-			void asyn_send(char* buf, int len, send_callback cb)
-			{
-				if(!sock_ || !buf) return;
-			}
-
-		private :
 			void i_on_recv(evutil_socket_t sock, short type, buffer* buf, recv_callback cb)
 			{
 				if(!buf) return;
-				int bt = ::recv(sock, &buf->buf[buf->recv_len], buf->len, 0);
+				int bt = ::recv(sock,
+					(buf->buffer_get_buf() + buf->buffer_get_pro_len()),
+					(buf->buffer_get_len() - buf->buffer_get_pro_len()),
+					0);
 				if(bt <= 0)
 				{	//	错误事件
+					delete buf;
 					i_err_occur(bt);
 					return;
 				}
 
-				buf->recv_len += bt;
-				if(buf->recv_len == buf->len)
-				{	//	接收完毕
-					cb(buf->len, 0);
+				if(buf->buffer_get_recv_some())
+				{
+					cb(bt, 0);
+					delete buf;
 				}
 				else
-				{	//	需要持续接收
-					default_thread_pool()->post(sock, EV_READ, bind(&socket_t::i_on_recv, this, _1, _2, buf, cb));
+				{
+					buf->buffer_set_pro_len(buf->buffer_get_pro_len() + bt);
+					if(buf->buffer_get_pro_len() == buf->buffer_get_len())
+					{	//	接收完毕
+						cb(buf->buffer_get_len(), 0);
+						delete buf;
+					}
+					else
+					{	//	需要持续接收
+						default_thread_pool()->post(sock, EV_READ, bind(&socket_t::i_on_recv, this, _1, _2, buf, cb));
+					}
 				}
 			}
 
-			void i_on_send(evutil_socket_t sock, short type, send_callback cb)
+			void i_on_send(evutil_socket_t sock, short type, buffer* buf, send_callback cb)
 			{
-
+				if(!buf) return;
+				if(buf->buffer_get_pro_len() == buf->buffer_get_len())
+				{	//	所有数据发送完毕
+					cb(buf->buffer_get_len(), 0);
+					delete buf;
+				}
+				else
+				{	//	继续发送
+					default_thread_pool()->post(sock_, EV_WRITE, bind(&socket_t::i_on_send, this, _1, _2, buf, cb));
+					int bt = ::send(sock_,
+						(buf->buffer_get_buf() + buf->buffer_get_pro_len()),
+						(buf->buffer_get_len() - buf->buffer_get_pro_len()),
+						0);
+					buf->buffer_set_pro_len(buf->buffer_get_pro_len() + bt);
+				}
 			}
 
 			void i_err_occur(int err)
 			{
-
+				err_cb_(err);
 			}
 
 		private :
 			SOCKET sock_;
+			error_callback err_cb_;
 		};
 
 		//	解析对象
 		struct resolver_t : bio_bas_t<resolver_t>
 		{
-			typedef function<void (std::vector<char*>, int)> resolve_callback;
+			typedef function<void (std::vector<auto_ptr<char> >, int)> resolve_callback;
 			struct resolve_info
 			{
 				resolve_info() {}
@@ -145,19 +237,20 @@ namespace bas
 				if(ri->url[0])
 				{
 					hostent* host = gethostbyname(ri->url);
-					if(!host) { ri->cb(std::vector<char*>(), -1); return 0; }
+					if(!host) { ri->cb(std::vector<auto_ptr<char> >(), -1); return 0; }
 
-					std::vector<char*> addr_list;
+					std::vector<auto_ptr<char> > addr_list;
 					int idx = 0;
 					while(host->h_addr_list[idx] != 0)
 					{
-						char* addr = new char[16];
-						strcpy(addr, inet_ntoa(*(in_addr*)host->h_addr_list[idx++]));
-						addr[15] = '\0';
+						auto_ptr<char> addr = new char[16];
+						strcpy(addr.raw_ptr(), inet_ntoa(*(in_addr*)host->h_addr_list[idx++]));
+						addr.raw_ptr()[15] = '\0';
 						addr_list.push_back(addr);
 					}
 					ri->cb(addr_list, 0);
 				}
+				delete ri;
 				return 0;
 			}
 		};
@@ -182,14 +275,12 @@ namespace bas
 			bool asyn_connect(const char* ip, unsigned short port, connect_callback cb, unsigned int timeout)
 			{
 				if(!ip || port == 0) { return false; }
-				if(check_url(ip))
-				{	//	域名
+				if(check_url(ip)) {
 					i_resolve(ip, port, cb, timeout);
-				}
-				else
-				{	//	十进制IP
+				} else {
 					i_connect(ip, port, cb, timeout);
 				}
+				return true;
 			}
 
 		private :
@@ -230,10 +321,10 @@ namespace bas
 				return true;
 			}
 
-			void i_on_resolve(std::vector<char*> addr, int err, unsigned short port, connect_callback cb, unsigned int timeout)
+			void i_on_resolve(std::vector<auto_ptr<char> > addr, int err, unsigned short port, connect_callback cb, unsigned int timeout)
 			{
 				if(err) { cb(socket_t(), -1); return; }
-				i_connect(addr[0], port, cb, timeout);
+				i_connect(addr[0].raw_ptr(), port, cb, timeout);
 			}
 
 			static DWORD WINAPI i_on_connect(LPVOID param)

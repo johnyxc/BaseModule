@@ -18,7 +18,9 @@ namespace bas
 		template <typename RT, typename P1_1 = int, typename P2_2 = int, typename P3_3 = int, 
 			typename P4_4 = int, typename P5_5 = int, typename P6_6 = int,
 			typename P7_7 = int, typename P8_8 = int, typename P9_9 = int>
-		struct function_wrapper
+		struct function_wrapper : bio_bas_t<function_wrapper<RT,
+			P1_1, P2_2, P3_3, P4_4,
+			P5_5, P6_6, P7_7, P8_8, P9_9> >
 		{
 			virtual ~function_wrapper() {}
 			virtual RT operator ()() { return RT(); }
@@ -71,9 +73,9 @@ namespace bas
 
 		public :
 			function_mem_wrapper() : fun_(), self_() {}
-			function_mem_wrapper(const function_mem_wrapper& fo) { fun_ = fo.fun_; self_ = fo.self_; }
+			function_mem_wrapper(const function_mem_wrapper& fo) { fun_ = fo.fun_; self_ = fo.self_; auto_self_ = fo.auto_self_; }
 			~function_mem_wrapper() { fun_ = 0; self_ = 0; }
-			function_mem_wrapper& operator = (const function_mem_wrapper& fo) { fun_ = fo.fun_; self_ = fo.self_; return *this; }
+			function_mem_wrapper& operator = (const function_mem_wrapper& fo) { fun_ = fo.fun_; self_ = fo.self_; auto_self_ = fo.auto_self_; return *this; }
 
 		public :
 			virtual RT operator ()() { if(self_&&fun_) return (self_->*fun_)(); return RT(); }
@@ -82,6 +84,7 @@ namespace bas
 		public :
 			CFUN fun_;
 			CT* self_;
+			auto_ptr<CT> auto_self_;
 		};
 
 		//////////////////////////////////////////////////////////////////////////
@@ -153,9 +156,9 @@ namespace bas
 
 		public :
 			function_mem_wrapper_1(const CallList1<PH1>& cl) : fun_(), self_(), cl_(cl) {}
-			function_mem_wrapper_1(const function_mem_wrapper_1& fo) { fun_ = fo.fun_; self_ = fo.self_; cl_ = fo.cl_; }
+			function_mem_wrapper_1(const function_mem_wrapper_1& fo) { fun_ = fo.fun_; self_ = fo.self_; auto_self_ = fo.auto_self_; cl_ = fo.cl_; }
 			~function_mem_wrapper_1() { fun_ = 0; self_ = 0; }
-			function_mem_wrapper_1& operator = (const function_mem_wrapper_1& fo) { fun_ = fo.fun_; self_ = fo.self_; cl_ = fo.cl_; return *this; }
+			function_mem_wrapper_1& operator = (const function_mem_wrapper_1& fo) { fun_ = fo.fun_; self_ = fo.self_; auto_self_ = fo.auto_self_; cl_ = fo.cl_; return *this; }
 
 		public :
 			virtual RT operator ()() {
@@ -179,6 +182,7 @@ namespace bas
 		public :
 			CFUN fun_;
 			CT* self_;
+			auto_ptr<CT> auto_self_;
 			CallList1<PH1> cl_;
 			RealList1<P1> rl_;
 		};
@@ -262,9 +266,9 @@ namespace bas
 
 		public :
 			function_mem_wrapper_2(const CallList2<PH1, PH2>& cl) : fun_(), self_(), cl_(cl) {}
-			function_mem_wrapper_2(const function_mem_wrapper_2& fo) { fun_ = fo.fun_; self_ = fo.self_; cl_ = fo.cl_; }
+			function_mem_wrapper_2(const function_mem_wrapper_2& fo) { fun_ = fo.fun_; self_ = fo.self_; auto_self_ = fo.auto_self_; cl_ = fo.cl_; }
 			~function_mem_wrapper_2() { fun_ = 0; self_ = 0; }
-			function_mem_wrapper_2& operator = (const function_mem_wrapper_2& fo) { fun_ = fo.fun_; self_ = fo.self_; cl_ = fo.cl_; return *this; }
+			function_mem_wrapper_2& operator = (const function_mem_wrapper_2& fo) { fun_ = fo.fun_; self_ = fo.self_; auto_self_ = fo.auto_self_; cl_ = fo.cl_; return *this; }
 
 		public :
 			virtual RT operator ()() {
@@ -295,6 +299,7 @@ namespace bas
 		public :
 			CFUN fun_;
 			CT* self_;
+			auto_ptr<CT> auto_self_;
 			CallList2<PH1, PH2> cl_;
 			RealList2<P1, P2> rl_;
 		};
@@ -382,9 +387,9 @@ namespace bas
 
 		public :
 			function_mem_wrapper_3(const CallList3<PH1, PH2, PH3>& cl) : fun_(), self_(), cl_(cl) {}
-			function_mem_wrapper_3(const function_mem_wrapper_3& fo) { fun_ = fo.fun_; self_ = fo.self_; cl_ = fo.cl_; }
+			function_mem_wrapper_3(const function_mem_wrapper_3& fo) { fun_ = fo.fun_; self_ = fo.self_; auto_self_ = fo.auto_self_; cl_ = fo.cl_; }
 			~function_mem_wrapper_3() { fun_ = 0; self_ = 0; }
-			function_mem_wrapper_3& operator = (const function_mem_wrapper_3& fo) { fun_ = fo.fun_; self_ = fo.self_; cl_ = fo.cl_; return *this; }
+			function_mem_wrapper_3& operator = (const function_mem_wrapper_3& fo) { fun_ = fo.fun_; self_ = fo.self_; auto_self_ = fo.auto_self_; cl_ = fo.cl_; return *this; }
 
 		public :
 			virtual RT operator ()() {
@@ -421,6 +426,7 @@ namespace bas
 		public :
 			CFUN fun_;
 			CT* self_;
+			auto_ptr<CT> auto_self_;
 			CallList3<PH1, PH2, PH3> cl_;
 			RealList3<P1, P2, P3> rl_;
 		};
@@ -515,9 +521,9 @@ namespace bas
 
 		public :
 			function_mem_wrapper_4(const CallList4<PH1, PH2, PH3, PH4>& cl) : fun_(), self_(), cl_(cl) {}
-			function_mem_wrapper_4(const function_mem_wrapper_4& fo) { fun_ = fo.fun_; self_ = fo.self_; cl_ = fo.cl_; }
+			function_mem_wrapper_4(const function_mem_wrapper_4& fo) { fun_ = fo.fun_; self_ = fo.self_; auto_self_ = fo.auto_self_; cl_ = fo.cl_; }
 			~function_mem_wrapper_4() { fun_ = 0; self_ = 0; }
-			function_mem_wrapper_4& operator = (const function_mem_wrapper_4& fo) { fun_ = fo.fun_; self_ = fo.self_; cl_ = fo.cl_; return *this; }
+			function_mem_wrapper_4& operator = (const function_mem_wrapper_4& fo) { fun_ = fo.fun_; self_ = fo.self_; auto_self_ = fo.auto_self_; cl_ = fo.cl_; return *this; }
 
 		public :
 			virtual RT operator ()() {
@@ -561,6 +567,7 @@ namespace bas
 		public :
 			CFUN fun_;
 			CT* self_;
+			auto_ptr<CT> auto_self_;
 			CallList4<PH1, PH2, PH3, PH4> cl_;
 			RealList4<P1, P2, P3, P4> rl_;
 		};
@@ -663,9 +670,9 @@ namespace bas
 
 		public :
 			function_mem_wrapper_5(const CallList5<PH1, PH2, PH3, PH4, PH5>& cl) : fun_(), self_(), cl_(cl) {}
-			function_mem_wrapper_5(const function_mem_wrapper_5& fo) { fun_ = fo.fun_; self_ = fo.self_; cl_ = fo.cl_; }
+			function_mem_wrapper_5(const function_mem_wrapper_5& fo) { fun_ = fo.fun_; self_ = fo.self_; auto_self_ = fo.auto_self_; cl_ = fo.cl_; }
 			~function_mem_wrapper_5() { fun_ = 0; self_ = 0; }
-			function_mem_wrapper_5& operator = (const function_mem_wrapper_5& fo) { fun_ = fo.fun_; self_ = fo.self_; cl_ = fo.cl_; return *this; }
+			function_mem_wrapper_5& operator = (const function_mem_wrapper_5& fo) { fun_ = fo.fun_; self_ = fo.self_; auto_self_ = fo.auto_self_; cl_ = fo.cl_; return *this; }
 
 		public :
 			virtual RT operator ()() {
@@ -717,6 +724,7 @@ namespace bas
 		public :
 			CFUN fun_;
 			CT* self_;
+			auto_ptr<CT> auto_self_;
 			CallList5<PH1, PH2, PH3, PH4, PH5> cl_;
 			RealList5<P1, P2, P3, P4, P5> rl_;
 		};
@@ -828,9 +836,9 @@ namespace bas
 
 		public :
 			function_mem_wrapper_6(const CallList6<PH1, PH2, PH3, PH4, PH5, PH6>& cl) : fun_(), self_(), cl_(cl) {}
-			function_mem_wrapper_6(const function_mem_wrapper_6& fo) { fun_ = fo.fun_; self_ = fo.self_; cl_ = fo.cl_; }
+			function_mem_wrapper_6(const function_mem_wrapper_6& fo) { fun_ = fo.fun_; self_ = fo.self_; auto_self_ = fo.auto_self_; cl_ = fo.cl_; }
 			~function_mem_wrapper_6() { fun_ = 0; self_ = 0; }
-			function_mem_wrapper_6& operator = (const function_mem_wrapper_6& fo) { fun_ = fo.fun_; self_ = fo.self_; cl_ = fo.cl_; return *this; }
+			function_mem_wrapper_6& operator = (const function_mem_wrapper_6& fo) { fun_ = fo.fun_; self_ = fo.self_; auto_self_ = fo.auto_self_; cl_ = fo.cl_; return *this; }
 
 		public :
 			virtual RT operator ()() {
@@ -891,6 +899,7 @@ namespace bas
 		public :
 			CFUN fun_;
 			CT* self_;
+			auto_ptr<CT> auto_self_;
 			CallList6<PH1, PH2, PH3, PH4, PH5, PH6> cl_;
 			RealList6<P1, P2, P3, P4, P5, P6> rl_;
 		};
@@ -1012,9 +1021,9 @@ namespace bas
 
 		public :
 			function_mem_wrapper_7(const CallList7<PH1, PH2, PH3, PH4, PH5, PH6, PH7>& cl) : fun_(), self_(), cl_(cl) {}
-			function_mem_wrapper_7(const function_mem_wrapper_7& fo) { fun_ = fo.fun_; self_ = fo.self_; cl_ = fo.cl_; }
+			function_mem_wrapper_7(const function_mem_wrapper_7& fo) { fun_ = fo.fun_; self_ = fo.self_; auto_self_ = fo.auto_self_; cl_ = fo.cl_; }
 			~function_mem_wrapper_7() { fun_ = 0; self_ = 0; }
-			function_mem_wrapper_7& operator = (const function_mem_wrapper_7& fo) { fun_ = fo.fun_; self_ = fo.self_; cl_ = fo.cl_; return *this; }
+			function_mem_wrapper_7& operator = (const function_mem_wrapper_7& fo) { fun_ = fo.fun_; self_ = fo.self_; auto_self_ = fo.auto_self_; cl_ = fo.cl_; return *this; }
 
 		public :
 			virtual RT operator ()() {
@@ -1085,6 +1094,7 @@ namespace bas
 		public :
 			CFUN fun_;
 			CT* self_;
+			auto_ptr<CT> auto_self_;
 			CallList7<PH1, PH2, PH3, PH4, PH5, PH6, PH7> cl_;
 			RealList7<P1, P2, P3, P4, P5, P6, P7> rl_;
 		};
@@ -1217,9 +1227,9 @@ namespace bas
 
 		public :
 			function_mem_wrapper_8(const CallList8<PH1, PH2, PH3, PH4, PH5, PH6, PH7, PH8>& cl) : fun_(), self_(), cl_(cl) {}
-			function_mem_wrapper_8(const function_mem_wrapper_8& fo) { fun_ = fo.fun_; self_ = fo.self_; cl_ = fo.cl_; }
+			function_mem_wrapper_8(const function_mem_wrapper_8& fo) { fun_ = fo.fun_; self_ = fo.self_; auto_self_ = fo.auto_self_; cl_ = fo.cl_; }
 			~function_mem_wrapper_8() { fun_ = 0; self_ = 0; }
-			function_mem_wrapper_8& operator = (const function_mem_wrapper_8& fo) { fun_ = fo.fun_; self_ = fo.self_; cl_ = fo.cl_; return *this; }
+			function_mem_wrapper_8& operator = (const function_mem_wrapper_8& fo) { fun_ = fo.fun_; self_ = fo.self_; auto_self_ = fo.auto_self_; cl_ = fo.cl_; return *this; }
 
 		public :
 			virtual RT operator ()() {
@@ -1301,6 +1311,7 @@ namespace bas
 		public :
 			CFUN fun_;
 			CT* self_;
+			auto_ptr<CT> auto_self_;
 			CallList8<PH1, PH2, PH3, PH4, PH5, PH6, PH7, PH8> cl_;
 			RealList8<P1, P2, P3, P4, P5, P6, P7, P8> rl_;
 		};
@@ -1445,9 +1456,9 @@ namespace bas
 
 		public :
 			function_mem_wrapper_9(const CallList9<PH1, PH2, PH3, PH4, PH5, PH6, PH7, PH8, PH9>& cl) : fun_(), self_(), cl_(cl) {}
-			function_mem_wrapper_9(const function_mem_wrapper_9& fo) { fun_ = fo.fun_; self_ = fo.self_; cl_ = fo.cl_; }
+			function_mem_wrapper_9(const function_mem_wrapper_9& fo) { fun_ = fo.fun_; self_ = fo.self_; auto_self_ = fo.auto_self_; cl_ = fo.cl_; }
 			~function_mem_wrapper_9() { fun_ = 0; self_ = 0; }
-			function_mem_wrapper_9& operator = (const function_mem_wrapper_9& fo) { fun_ = fo.fun_; self_ = fo.self_; cl_ = fo.cl_; return *this; }
+			function_mem_wrapper_9& operator = (const function_mem_wrapper_9& fo) { fun_ = fo.fun_; self_ = fo.self_; auto_self_ = fo.auto_self_; cl_ = fo.cl_; return *this; }
 
 		public :
 			virtual RT operator ()() {
@@ -1541,6 +1552,7 @@ namespace bas
 		public :
 			CFUN fun_;
 			CT* self_;
+			auto_ptr<CT> auto_self_;
 			CallList9<PH1, PH2, PH3, PH4, PH5, PH6, PH7, PH8, PH9> cl_;
 			RealList9<P1, P2, P3, P4, P5, P6, P7, P8, P9> rl_;
 		};

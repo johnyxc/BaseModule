@@ -8,10 +8,10 @@
 #include <windows.h>
 namespace base = bas::detail;
 
-struct A
+struct A : base::bio_bas_t<A>
 {
-	A() { printf("Constructor\n"); }
-	~A() { printf("Destructor\n"); }
+	A() { printf("A Constructor\n"); }
+	~A() { printf("A Destructor\n"); }
 
 	void f0() {}
 	void f1(int i) { printf("f1 : %d\n", i); }
@@ -51,7 +51,7 @@ struct Base : base::active_object_t<Base<T> >
 		post(base::bind(&Base::schedule1, this, 1));
 		post(base::bind(&Base::schedule2, this, 2));
 	}
-	virtual ~Base() {}
+	virtual ~Base() { printf("Base Destructor\n"); }
 	virtual void print() { printf("Base\n"); }
 
 	void schedule1(int i)
@@ -72,8 +72,18 @@ struct Base : base::active_object_t<Base<T> >
 template <typename T>
 struct Derive : Base<T>
 {
+	~Derive() { printf("Derive Destructor\n"); }
 	virtual void print() { printf("Derive\n"); }
 };
+
+base::socket_t g_sock;
+char g_recv_buf[1024] = {};
+
+void OnRecv(int bt, int err)
+{
+	printf("Receive Message : %s\n", g_recv_buf);
+	g_sock.asyn_recv(g_recv_buf, 12, base::bind(&OnRecv, base::_1, base::_2));
+}
 
 void OnConnect(base::socket_t sock, int err)
 {
@@ -84,6 +94,8 @@ void OnConnect(base::socket_t sock, int err)
 	else
 	{
 		printf("connect success\n");
+		g_sock = sock;
+		g_sock.asyn_recv(g_recv_buf, 12, base::bind(&OnRecv, base::_1, base::_2));
 	}
 }
 
@@ -101,11 +113,22 @@ void OnAccept(base::socket_t sock, int err)
 
 void main()
 {
-	/*
-	base::auto_ptr<Base<int> > bs;
-	base::auto_ptr<Derive<int> > dr = bas::make_auto_ptr<Derive<int> >();
-	bs = base::auto_ptr<Base<int> >::auto_ptr_dynamic_cast(dr);
-	bs->print();
+	{
+		base::function<void ()> fo;
+		{
+			A* a = new A;
+			fo = base::bind(&A::f0, bas::retain(a));
+			a->release();
+			fo();
+		}
+	}
+
+	{
+		base::auto_ptr<Base<int> > bs;
+		base::auto_ptr<Derive<int> > dr = bas::make_auto_ptr<Derive<int> >();
+		bs = base::auto_ptr<Base<int> >::auto_ptr_dynamic_cast(dr);
+		bs->print();
+	}
 
 	A a;
  	a.init();
@@ -135,21 +158,13 @@ void main()
 	fo9(110, 120, 70.0, &t, 'i', 0x0, &t, &t, str);
 	fo9_2(120, 130);
 
-	bas::default_thread_pool()->run();
-	Base<int> b;
-	//Sleep(100);
-
-	//bas::default_thread_pool()->stop();
-
-	int i = 0;
-	*/
-
  	bas::default_thread_pool()->run();
-// 	base::connector_t co;
-// 	co.asyn_connect("www.winxuan.com/product/1201111489", 80, base::bind(OnConnect, base::_1, base::_2), 5000);
+	base::connector_t co;
+	//co.asyn_connect("10.34.43.55", 8869, base::bind(OnConnect, base::_1, base::_2), 5000);
+	co.asyn_connect("www.winxuan.com", 80, base::bind(OnConnect, base::_1, base::_2), 5000);
 
-	base::acceptor_t acpt;
-	acpt.asyn_accept(0, 8869, bind(&OnAccept, base::_1, base::_2));
+// 	base::acceptor_t acpt;
+// 	acpt.asyn_accept(0, 8869, bind(&OnAccept, base::_1, base::_2));
 
 	SuspendThread(GetCurrentThread());
 }

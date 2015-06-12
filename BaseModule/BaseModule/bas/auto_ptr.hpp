@@ -28,6 +28,27 @@ namespace bas
 		private :
 			T* o_;
 		};
+		//////////////////////////////////////////////////////////////////////////
+
+#define BIT_IMPL(T) \
+	public : \
+		auto_ptr() { pwt_ = new ptr_wrapper_t<T>; } \
+		auto_ptr(T* o) : pwt_() { pwt_ = new ptr_wrapper_t<T>(o); } \
+		auto_ptr(ptr_wrapper_t<T>* pwt) { pwt_ = pwt; pwt_->retain(); } \
+		~auto_ptr() { if(pwt_) pwt_->release(); } \
+		auto_ptr(const auto_ptr& ap) { pwt_ = ap.pwt_; pwt_->retain(); } \
+		auto_ptr& operator = (const auto_ptr& ap) { pwt_ = ap.pwt_; pwt_->retain(); return *this; } \
+	public : \
+		T* operator -> () { if(pwt_) return pwt_->get_ptr(); return 0; } \
+		T operator * () { if(pwt_) return *pwt_->get_ptr(); return T(); } \
+		T* raw_ptr() { if(pwt_) return pwt_->get_ptr(); return 0; } \
+		ptr_wrapper_t<T>* wrapper_ptr() { return pwt_; } \
+		bool valid() { return pwt_->get_ptr() != 0; } \
+		operator bool () { return valid(); } \
+	private : \
+		ptr_wrapper_t<T>* pwt_;
+
+		//////////////////////////////////////////////////////////////////////////
 
 		template <typename T>
 		struct auto_ptr
@@ -36,36 +57,76 @@ namespace bas
 			template <typename TS>
 			static detail::auto_ptr<T> auto_ptr_dynamic_cast(detail::auto_ptr<TS> psrc)
 			{
-				auto_ptr<T> pdst((ptr_wrapper_t<T>*)psrc.wrapper_ptr());
+				auto_ptr<T> pdst((T*)psrc.raw_ptr());
+				pdst->retain();
 				return pdst;
 			}
 
 		public :
-			auto_ptr() { pwt_ = new ptr_wrapper_t<T>; }
-			auto_ptr(T* o) : pwt_() { pwt_ = new ptr_wrapper_t<T>(o); }
-			auto_ptr(ptr_wrapper_t<T>* pwt) { pwt_ = pwt; pwt_->retain(); }
-			~auto_ptr() { if(pwt_) pwt_->release(); }
-			auto_ptr(const auto_ptr& ap) { pwt_ = ap.pwt_; pwt_->retain(); }
-			auto_ptr& operator = (const auto_ptr& ap) { pwt_ = ap.pwt_; pwt_->retain(); return *this; }
+			auto_ptr() : pwt_() {}
+			auto_ptr(T* o) : pwt_(o) {}
+			auto_ptr(const auto_ptr& ap)
+			{
+				if(!ap.pwt_) return;
+				pwt_ = ap.pwt_;
+				pwt_->retain();
+			}
+			~auto_ptr()
+			{
+				if(pwt_)
+					pwt_->release();
+			}
+			auto_ptr& operator = (const auto_ptr& ap)
+			{
+				if(!ap.pwt_) return *this;
+				pwt_ = ap.pwt_;
+				pwt_->retain();
+				return *this;
+			}
 
 		public :
-			T* operator -> () { if(pwt_) return pwt_->get_ptr(); return 0; }
-			T operator * () { if(pwt_) return *pwt_->get_ptr(); return T(); }
-			T* raw_ptr() { if(pwt_) return pwt_->get_ptr(); return 0; }
-			ptr_wrapper_t<T>* wrapper_ptr() { return pwt_; }
-			bool valid() { return pwt_->get_ptr() != 0; }
+			T* operator -> () { if(pwt_) return pwt_; return 0; }
+			T* raw_ptr() { if(pwt_) return pwt_; return 0; }
+			bool valid() { return pwt_ != 0; }
 			operator bool () { return valid(); }
 
 		private :
-			ptr_wrapper_t<T>* pwt_;
+			T* pwt_;
 		};
+
+		template <>
+		struct auto_ptr<int> { BIT_IMPL(int) };
+		template <>
+		struct auto_ptr<unsigned int> { BIT_IMPL(unsigned int) };
+
+		template <>
+		struct auto_ptr<char> { BIT_IMPL(char) };
+		template <>
+		struct auto_ptr<unsigned char> { BIT_IMPL(unsigned char) };
+
+		template <>
+		struct auto_ptr<long> { BIT_IMPL(long) };
+		template <>
+		struct auto_ptr<unsigned long> { BIT_IMPL(unsigned long) };
+
+		template <>
+		struct auto_ptr<long long> { BIT_IMPL(long long) };
+		template <>
+		struct auto_ptr<unsigned long long> { BIT_IMPL(unsigned long long) };
+
+		template <>
+		struct auto_ptr<float> { BIT_IMPL(float) };
+		template <>
+		struct auto_ptr<double> { BIT_IMPL(double) };
 	}
 
 	//	一般在传实参时使用
 	template <typename T>
 	detail::auto_ptr<T> retain(T* t)
 	{
-		return detail::auto_ptr<T>(t);
+		detail::auto_ptr<T> ap(t);
+		ap->retain();
+		return ap;
 	}
 
 	//	避免外部直接调用new
