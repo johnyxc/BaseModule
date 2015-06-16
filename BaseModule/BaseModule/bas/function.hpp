@@ -3,6 +3,7 @@
 #include <placeholder.hpp>
 #include <auto_ptr.hpp>
 #include <repeat.hpp>
+#include <map>
 //////////////////////////////////////////////////////////////////////////
 
 namespace bas
@@ -1565,8 +1566,7 @@ namespace bas
 		//////////////////////////////////////////////////////////////////////////
 		//	外部使用的最终形式
 		template <typename SIG>
-		struct function
-		{};
+		struct function {};
 
 		template <typename RT>
 		struct function<RT()>
@@ -1600,7 +1600,6 @@ namespace bas
 			function& operator = (const function& fo) { invoker_ = fo.invoker_; return *this; }
 
 		public :
-			RT operator ()() { if(invoker_) return invoker_->operator()(); return RT(); }
 			RT operator ()(P1 p1) { if(invoker_) return invoker_->operator()(p1); return RT(); }
 
 		public :
@@ -1620,8 +1619,6 @@ namespace bas
 			function& operator = (const function& fo) { invoker_ = fo.invoker_; return *this; }
 
 		public :
-			RT operator ()() { if(invoker_) return invoker_->operator()(); return RT(); }
-			RT operator ()(P1 p1) { if(invoker_) return invoker_->operator()(p1); return RT(); }
 			RT operator ()(P1 p1, P2 p2) { if(invoker_) return invoker_->operator()(p1, p2); return RT(); }
 
 		public :
@@ -1641,9 +1638,6 @@ namespace bas
 			function& operator = (const function& fo) { invoker_ = fo.invoker_; return *this; }
 
 		public :
-			RT operator ()() { if(invoker_) return invoker_->operator()(); return RT(); }
-			RT operator ()(P1 p1) { if(invoker_) return invoker_->operator()(p1); return RT(); }
-			RT operator ()(P1 p1, P2 p2) { if(invoker_) return invoker_->operator()(p1, p2); return RT(); }
 			RT operator ()(P1 p1, P2 p2, P3 p3) { if(invoker_) return invoker_->operator()(p1, p2, p3); return RT(); }
 
 		public :
@@ -1663,10 +1657,6 @@ namespace bas
 			function& operator = (const function& fo) { invoker_ = fo.invoker_; return *this; }
 
 		public :
-			RT operator ()() { if(invoker_) return invoker_->operator()(); return RT(); }
-			RT operator ()(P1 p1) { if(invoker_) return invoker_->operator()(p1); return RT(); }
-			RT operator ()(P1 p1, P2 p2) { if(invoker_) return invoker_->operator()(p1, p2); return RT(); }
-			RT operator ()(P1 p1, P2 p2, P3 p3) { if(invoker_) return invoker_->operator()(p1, p2, p3); return RT(); }
 			RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4) { if(invoker_) return invoker_->operator()(p1, p2, p3, p4); return RT(); }
 
 		public :
@@ -1686,11 +1676,6 @@ namespace bas
 			function& operator = (const function& fo) { invoker_ = fo.invoker_; return *this; }
 
 		public :
-			RT operator ()() { if(invoker_) return invoker_->operator()(); return RT(); }
-			RT operator ()(P1 p1) { if(invoker_) return invoker_->operator()(p1); return RT(); }
-			RT operator ()(P1 p1, P2 p2) { if(invoker_) return invoker_->operator()(p1, p2); return RT(); }
-			RT operator ()(P1 p1, P2 p2, P3 p3) { if(invoker_) return invoker_->operator()(p1, p2, p3); return RT(); }
-			RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4) { if(invoker_) return invoker_->operator()(p1, p2, p3, p4); return RT(); }
 			RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5) { if(invoker_) return invoker_->operator()(p1, p2, p3, p4, p5); return RT(); }
 
 		public :
@@ -1710,12 +1695,6 @@ namespace bas
 			function& operator = (const function& fo) { invoker_ = fo.invoker_; return *this; }
 
 		public :
-			RT operator ()() { if(invoker_) return invoker_->operator()(); return RT(); }
-			RT operator ()(P1 p1) { if(invoker_) return invoker_->operator()(p1); return RT(); }
-			RT operator ()(P1 p1, P2 p2) { if(invoker_) return invoker_->operator()(p1, p2); return RT(); }
-			RT operator ()(P1 p1, P2 p2, P3 p3) { if(invoker_) return invoker_->operator()(p1, p2, p3); return RT(); }
-			RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4) { if(invoker_) return invoker_->operator()(p1, p2, p3, p4); return RT(); }
-			RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5) { if(invoker_) return invoker_->operator()(p1, p2, p3, p4, p5); return RT(); }
 			RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6) { if(invoker_) return invoker_->operator()(p1, p2, p3, p4, p5, p6); return RT(); }
 
 		public :
@@ -1735,13 +1714,6 @@ namespace bas
 			function& operator = (const function& fo) { invoker_ = fo.invoker_; return *this; }
 
 		public :
-			RT operator ()() { if(invoker_) return invoker_->operator()(); return RT(); }
-			RT operator ()(P1 p1) { if(invoker_) return invoker_->operator()(p1); return RT(); }
-			RT operator ()(P1 p1, P2 p2) { if(invoker_) return invoker_->operator()(p1, p2); return RT(); }
-			RT operator ()(P1 p1, P2 p2, P3 p3) { if(invoker_) return invoker_->operator()(p1, p2, p3); return RT(); }
-			RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4) { if(invoker_) return invoker_->operator()(p1, p2, p3, p4); return RT(); }
-			RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5) { if(invoker_) return invoker_->operator()(p1, p2, p3, p4, p5); return RT(); }
-			RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6) { if(invoker_) return invoker_->operator()(p1, p2, p3, p4, p5, p6); return RT(); }
 			RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7) { if(invoker_) return invoker_->operator()(p1, p2, p3, p4, p5, p6, p7); return RT(); }
 
 		public :
@@ -1761,14 +1733,6 @@ namespace bas
 			function& operator = (const function& fo) { invoker_ = fo.invoker_; return *this; }
 
 		public :
-			RT operator ()() { if(invoker_) return invoker_->operator()(); return RT(); }
-			RT operator ()(P1 p1) { if(invoker_) return invoker_->operator()(p1); return RT(); }
-			RT operator ()(P1 p1, P2 p2) { if(invoker_) return invoker_->operator()(p1, p2); return RT(); }
-			RT operator ()(P1 p1, P2 p2, P3 p3) { if(invoker_) return invoker_->operator()(p1, p2, p3); return RT(); }
-			RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4) { if(invoker_) return invoker_->operator()(p1, p2, p3, p4); return RT(); }
-			RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5) { if(invoker_) return invoker_->operator()(p1, p2, p3, p4, p5); return RT(); }
-			RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6) { if(invoker_) return invoker_->operator()(p1, p2, p3, p4, p5, p6); return RT(); }
-			RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7) { if(invoker_) return invoker_->operator()(p1, p2, p3, p4, p5, p6, p7); return RT(); }
 			RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7, P8 p8) { if(invoker_) return invoker_->operator()(p1, p2, p3, p4, p5, p6, p7, p8); return RT(); }
 
 		public :
@@ -1788,20 +1752,105 @@ namespace bas
 			function& operator = (const function& fo) { invoker_ = fo.invoker_; return *this; }
 
 		public :
-			RT operator ()() { if(invoker_) return invoker_->operator()(); return RT(); }
-			RT operator ()(P1 p1) { if(invoker_) return invoker_->operator()(p1); return RT(); }
-			RT operator ()(P1 p1, P2 p2) { if(invoker_) return invoker_->operator()(p1, p2); return RT(); }
-			RT operator ()(P1 p1, P2 p2, P3 p3) { if(invoker_) return invoker_->operator()(p1, p2, p3); return RT(); }
-			RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4) { if(invoker_) return invoker_->operator()(p1, p2, p3, p4); return RT(); }
-			RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5) { if(invoker_) return invoker_->operator()(p1, p2, p3, p4, p5); return RT(); }
-			RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6) { if(invoker_) return invoker_->operator()(p1, p2, p3, p4, p5, p6); return RT(); }
-			RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7) { if(invoker_) return invoker_->operator()(p1, p2, p3, p4, p5, p6, p7); return RT(); }
-			RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7, P8 p8) { if(invoker_) return invoker_->operator()(p1, p2, p3, p4, p5, p6, p7, p8); return RT(); }
 			RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7, P8 p8, P9 p9) { if(invoker_) return invoker_->operator()(p1, p2, p3, p4, p5, p6, p7, p8, p9); return RT(); }
 
 		public :
 			auto_ptr<function_wrapper<RT, P1, P2, P3, P4, P5, P6, P7, P8, P9> > invoker_;
 		};
+
+		//////////////////////////////////////////////////////////////////////////
+		//	信号
+		template <typename SIG>
+		struct signal {};
+
+		template <typename RT>
+		struct signal<RT()>
+		{
+		public :
+			signal() : key_() {}
+			~signal() {}
+
+		public :
+			int slot(function<RT()> fo)
+			{
+				int key = generate_key();
+				fo_list_.insert(std::pair<int, function<RT()> >(key, fo));
+				return key;
+			}
+
+			void cancel(int key)
+			{
+				std::map<int, function<RT()> >::iterator iter;
+				iter = fo_list_.find(key);
+				if(iter == fo_list_.end()) return;
+				fo_list_.erase(iter);
+			}
+
+			RT operator ()()
+			{
+				std::map<int, function<RT()> >::iterator iter;
+				for(iter = fo_list_.begin(); iter != fo_list_.end(); ++iter)
+				{
+					(iter->second)();
+				}
+			}
+
+		private :
+			int generate_key()
+			{
+				return ++key_;
+			}
+
+		private :
+			std::map<int, function<RT()> > fo_list_;
+			int key_;
+		};
+
+#define SIGNAL_EXPAND(i) \
+		template <typename RT, comma_expand(exp_template_list, i)> \
+		struct signal<RT(comma_expand(exp_type_list, i))> \
+		{ \
+		public : \
+			signal() : key_() {} \
+			~signal() {} \
+\
+		public : \
+			int slot(function<RT(comma_expand(exp_type_list, i))> fo) \
+			{ \
+				int key = generate_key(); \
+				fo_list_.insert(std::pair<int, function<RT(comma_expand(exp_type_list, i))> >(key, fo)); \
+				return key; \
+			} \
+\
+			void cancel(int key) \
+			{ \
+				std::map<int, function<RT(comma_expand(exp_type_list, i))> >::iterator iter; \
+				iter = fo_list_.find(key); \
+				if(iter == fo_list_.end()) return; \
+				fo_list_.erase(iter); \
+			} \
+\
+			RT operator ()(comma_expand(exp_formal_list, i)) \
+			{ \
+				std::map<int, function<RT(comma_expand(exp_type_list, i))> >::iterator iter; \
+				for(iter = fo_list_.begin(); iter != fo_list_.end(); ++iter) \
+				{ \
+					(iter->second)(comma_expand(exp_actual_list, i)); \
+				} \
+			} \
+\
+		private : \
+			int generate_key() \
+			{ \
+				return ++key_; \
+			} \
+\
+		private : \
+			std::map<int, function<RT(comma_expand(exp_type_list, i))> > fo_list_; \
+			int key_; \
+		};
+
+		blank_expand(SIGNAL_EXPAND, 9)
 	}
 }
 

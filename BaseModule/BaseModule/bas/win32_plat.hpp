@@ -4,6 +4,7 @@
 #ifdef _WIN32
 
 #include <WinSock2.h>
+#include <thread_pool.hpp>
 #pragma comment(lib, "ws2_32.lib")
 
 #ifdef _DEBUG
@@ -12,23 +13,28 @@
 #pragma comment(lib, ".\\libevent\\lib\\Release\\libevent.lib")
 #endif
 
-void win32_init()
+void init()
 {
 	WSADATA wsaData;
 	WORD sockVersion = MAKEWORD(2, 2);
 	WSAStartup(sockVersion, &wsaData);
+
+	bas::tp = bas::make_auto_ptr<bas::detail::thread_pool_t>();
 }
 
-void win32_uninit()
+void uninit()
 {
 	WSACleanup();
 }
 
 struct win32_auto_init
 {
-	win32_auto_init() { win32_init(); }
-	~win32_auto_init() { win32_uninit(); }
-} wai;
+	win32_auto_init() { init(); }
+	~win32_auto_init() { uninit(); }
+};
 
-#endif
-#endif
+#define bas_init() \
+	static win32_auto_init wai
+
+#endif	//	_WIN32
+#endif	//	__WIN32_PLAT_HPP_2015_06_10__

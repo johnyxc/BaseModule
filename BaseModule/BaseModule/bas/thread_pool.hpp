@@ -1,19 +1,19 @@
 #ifndef __THREAD_POOL_HPP_2015_06_08__
 #define __THREAD_POOL_HPP_2015_06_08__
 #include <event2/event.h>
-#include <win32_plat.hpp>
 #include <bio.hpp>
 #include <thread.hpp>
 #include <function.hpp>
 #include <bind.hpp>
 #include <auto_ptr.hpp>
 #include <strand.hpp>
-#include <vector>
+#include <map>
 #include <algorithm>
 
 //	线程池基于 libevent 实现
 //	这样一方面可以给 io 提供异步服务
 //	另一方面可以给内部逻辑提供异步服务
+//	TODO 注意删除事件时的多线程问题
 namespace bas
 {
 	namespace detail
@@ -29,6 +29,14 @@ namespace bas
 				auto_ptr<thread_t> pthread_;
 				event_base* pbase_;
 				bool alive_;
+			};
+
+			struct callback_r
+			{
+				callback_r() : del(true), fo(new STANDARD_FUN) {}
+				~callback_r() { delete fo; }
+				bool del;
+				STANDARD_FUN* fo;
 			};
 
 		public :
@@ -54,10 +62,11 @@ namespace bas
 
 			void stop()
 			{
-				for(unsigned int i = 0; i < io_event_list_.size(); i++)
+				std::map<event*, callback_r*>::iterator iter;
+				for(iter = io_event_list_.begin(); iter != io_event_list_.end(); ++iter)
 				{
-					event* evt = io_event_list_[i];
-					if(evt) event_del(evt);
+					event_del(iter->first);
+					delete iter->second;
 				}
 
 				for(int i = 0; i < count_; i++)
@@ -86,23 +95,25 @@ namespace bas
 
 			event* post(evutil_socket_t sock, short type, STANDARD_FUN fo)
 			{
-				STANDARD_FUN* pfo = new STANDARD_FUN;
-				*pfo = fo;
+				callback_r* pfo = new callback_r;
+				if((type & 0x10) != 0) pfo->del = false;
+				(*(pfo->fo)) = fo;
 
 				event_base* pbase = pthread_[(cur_idx_++) % count_].pbase_;
 				event* evt = event_new(pbase, sock, type, i_on_io_event, pfo);
-				io_event_list_.push_back(evt);
+				io_event_list_.insert(std::pair<event*, callback_r*>(evt, pfo));
 
 				event_add(evt, 0);
 				return evt;
 			}
 
-			void remove(event* evt)
+			void remove(event* evt, bool del = false)
 			{
-				std::vector<event*>::iterator iter;
-				iter = std::find(io_event_list_.begin(), io_event_list_.end(), evt);
+				std::map<event*, callback_r*>::iterator iter;
+				iter = io_event_list_.find(evt);
 				if(iter == io_event_list_.end()) return;
-				event_del(*iter);
+				event_del(iter->first);
+				if(del) delete iter->second;
 				io_event_list_.erase(iter);
 			}
 
@@ -130,20 +141,21 @@ namespace bas
 			static void i_on_io_event(evutil_socket_t sock, short type, void* arg)
 			{
 				if(!arg) return;
-				STANDARD_FUN* pfo = (STANDARD_FUN*)arg;
-				(*pfo)(sock, type);
+				callback_r* pfo = (callback_r*)arg;
+				(*(pfo->fo))(sock, type);
+				if(pfo->del) delete pfo;
 			}
 
 		private :
 			pt_param pthread_[MAX_THREAD_COUNT];
-			std::vector<event*> io_event_list_;
+			std::map<event*, callback_r*> io_event_list_;
 			int count_;
-			int cur_idx_;
+			unsigned int cur_idx_;
 		};
 	}
 
-	detail::thread_pool_t tp;
-	detail::thread_pool_t* default_thread_pool() { return &tp; }
+	detail::auto_ptr<detail::thread_pool_t> tp;
+	detail::thread_pool_t* default_thread_pool() { return tp.raw_ptr(); }
 }
 
 #endif

@@ -1,6 +1,5 @@
 #ifndef __SOCKET_HPP_2015_06_10__
 #define __SOCKET_HPP_2015_06_10__
-#include <win32_plat.hpp>
 #include <activeobject.hpp>
 #include <function.hpp>
 #include <auto_ptr.hpp>
@@ -81,7 +80,7 @@ namespace bas
 			//////////////////////////////////////////////////////////////////////////
 
 		public :
-			socket_t() : sock_() {}
+			socket_t() : sock_(), cur_rd_evt_(), cur_wr_evt_() {}
 			~socket_t() {}
 
 		public :
@@ -122,13 +121,19 @@ namespace bas
 				bf->buffer_set_len(len);
 
 				//	每次调用都是一次性发送行为
-				default_thread_pool()->post(sock_, EV_WRITE, bind(&socket_t::i_on_send, this, _1, _2, bf, cb));
+				if(cur_wr_evt_) default_thread_pool()->remove(cur_wr_evt_);
+				cur_wr_evt_ = default_thread_pool()->post(sock_, EV_WRITE, bind(&socket_t::i_on_send, bas::retain(this), _1, _2, bf, cb));
 
 				int bt = ::send(sock_, bf->buffer_get_buf(), bf->buffer_get_len(), 0);
 				if(bt <= 0) { delete bf; return false; }
 				bf->buffer_set_pro_len(bf->buffer_get_pro_len() + bt);
 
 				return true;
+			}
+
+			void clear()
+			{
+				default_thread_pool()->post(bind(&socket_t::i_on_clear, bas::retain(this)));
 			}
 
 		private :
@@ -140,7 +145,8 @@ namespace bas
 				bf->buffer_set_recv_some(recv_some);
 
 				//	每次调用都是一次性接收行为
-				default_thread_pool()->post(sock_, EV_READ, bind(&socket_t::i_on_recv, this, _1, _2, bf, cb));
+				if(cur_rd_evt_) default_thread_pool()->remove(cur_rd_evt_);
+				cur_rd_evt_ = default_thread_pool()->post(sock_, EV_READ, bind(&socket_t::i_on_recv, bas::retain(this), _1, _2, bf, cb));
 			}
 
 			void i_on_recv(evutil_socket_t sock, short type, buffer* buf, recv_callback cb)
@@ -160,6 +166,8 @@ namespace bas
 				if(buf->buffer_get_recv_some())
 				{
 					cb(bt, 0);
+					if(cur_rd_evt_) default_thread_pool()->remove(cur_rd_evt_);
+					cur_rd_evt_ = 0;
 					delete buf;
 				}
 				else
@@ -168,11 +176,14 @@ namespace bas
 					if(buf->buffer_get_pro_len() == buf->buffer_get_len())
 					{	//	接收完毕
 						cb(buf->buffer_get_len(), 0);
+						if(cur_rd_evt_) default_thread_pool()->remove(cur_rd_evt_);
+						cur_rd_evt_ = 0;
 						delete buf;
 					}
 					else
 					{	//	需要持续接收
-						default_thread_pool()->post(sock, EV_READ, bind(&socket_t::i_on_recv, this, _1, _2, buf, cb));
+						if(cur_rd_evt_) default_thread_pool()->remove(cur_rd_evt_);
+						cur_rd_evt_ = default_thread_pool()->post(sock, EV_READ, bind(&socket_t::i_on_recv, bas::retain(this), _1, _2, buf, cb));
 					}
 				}
 			}
@@ -183,11 +194,14 @@ namespace bas
 				if(buf->buffer_get_pro_len() == buf->buffer_get_len())
 				{	//	所有数据发送完毕
 					cb(buf->buffer_get_len(), 0);
+					if(cur_wr_evt_) default_thread_pool()->remove(cur_wr_evt_);
+					cur_wr_evt_ = 0;
 					delete buf;
 				}
 				else
 				{	//	继续发送
-					default_thread_pool()->post(sock_, EV_WRITE, bind(&socket_t::i_on_send, this, _1, _2, buf, cb));
+					if(cur_wr_evt_) default_thread_pool()->remove(cur_wr_evt_);
+					cur_wr_evt_ = default_thread_pool()->post(sock_, EV_WRITE, bind(&socket_t::i_on_send, bas::retain(this), _1, _2, buf, cb));
 					int bt = ::send(sock_,
 						(buf->buffer_get_buf() + buf->buffer_get_pro_len()),
 						(buf->buffer_get_len() - buf->buffer_get_pro_len()),
@@ -201,9 +215,32 @@ namespace bas
 				err_cb_(err);
 			}
 
+			void i_on_clear()
+			{
+				if(cur_wr_evt_)
+				{
+					default_thread_pool()->remove(cur_wr_evt_, true);
+					cur_wr_evt_ = 0;
+				}
+
+				if(cur_rd_evt_)
+				{
+					default_thread_pool()->remove(cur_rd_evt_, true);
+					cur_rd_evt_ = 0;
+				}
+
+				if(sock_)
+				{
+					::closesocket(sock_);
+					sock_ = 0;
+				}
+			}
+
 		private :
 			SOCKET sock_;
 			error_callback err_cb_;
+			event* cur_wr_evt_;
+			event* cur_rd_evt_;
 		};
 
 		//	解析对象
@@ -296,7 +333,7 @@ namespace bas
 
 			bool i_resolve(const char* ip, unsigned short port, connect_callback cb, unsigned int timeout)
 			{
-				return resolve_.asyn_resolve(ip, bind(&connector_t::i_on_resolve, this, _1, _2, port, cb, timeout));
+				return resolve_.asyn_resolve(ip, bind(&connector_t::i_on_resolve, bas::retain(this), _1, _2, port, cb, timeout));
 			}
 
 			bool i_connect(const char* ip, unsigned short port, connect_callback cb, unsigned int timeout)
@@ -374,7 +411,7 @@ namespace bas
 
 		public :
 			acceptor_t() : sock_(), evt_() {}
-			~acceptor_t() { if(evt_) default_thread_pool()->remove(evt_); }
+			~acceptor_t() {}
 
 		public :
 			bool asyn_accept(const char* ip, unsigned short port, accept_callback cb)
@@ -397,8 +434,13 @@ namespace bas
 				if(::bind(sock_, (sockaddr*)&addr, sizeof(addr)) != 0) { return false; }
 				if(::listen(sock_, 1024) != 0) { return false; }
 
-				evt_ = default_thread_pool()->post(sock_, EV_READ | EV_PERSIST, bind(&acceptor_t::i_on_accept, this, _1, _2, cb));
+				evt_ = default_thread_pool()->post(sock_, EV_READ | EV_PERSIST, bind(&acceptor_t::i_on_accept, bas::retain(this), _1, _2, cb));
 				return true;
+			}
+
+			void stop()
+			{
+				if(evt_) default_thread_pool()->remove(evt_, true);
 			}
 
 		private :
