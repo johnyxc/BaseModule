@@ -3,25 +3,6 @@
 //	定义一些方便的宏扩展
 
 //////////////////////////////////////////////////////////////////////////
-//	内置类型
-
-//	逗号扩展
-#define comma_repeat_0_inner(mcr)
-#define comma_repeat_1_inner(mcr)	mcr
-#define comma_repeat_2_inner(mcr)	comma_repeat_1_inner(mcr) ,mcr
-#define comma_repeat_3_inner(mcr)	comma_repeat_2_inner(mcr) ,mcr
-#define comma_repeat_4_inner(mcr)	comma_repeat_3_inner(mcr) ,mcr
-#define comma_repeat_5_inner(mcr)	comma_repeat_4_inner(mcr) ,mcr
-#define comma_repeat_6_inner(mcr)	comma_repeat_5_inner(mcr) ,mcr
-#define comma_repeat_7_inner(mcr)	comma_repeat_6_inner(mcr) ,mcr
-#define comma_repeat_8_inner(mcr)	comma_repeat_7_inner(mcr) ,mcr
-#define comma_repeat_9_inner(mcr)	comma_repeat_8_inner(mcr) ,mcr
-#define comma_repeat_inner(e)		comma_repeat_##e##_inner
-
-//	封装
-#define comma_expand_inner(mcr, e)	comma_repeat_inner(e)(mcr)
-
-//////////////////////////////////////////////////////////////////////////
 //	自定义类型
 
 //	逗号扩展

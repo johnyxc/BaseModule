@@ -28,27 +28,10 @@ namespace bas
 			blank_expand(VFUN_EXPAND, 9)
 		};
 
-#define VFUN0_EXPAND(i) \
-	virtual RT operator ()(comma_expand_inner(int, i)) { return RT(); }
-
 		//////////////////////////////////////////////////////////////////////////
-		//	wrapper基类
-		//	无参版本
-		template <typename RT>
-		struct function_base_wrapper
-		{
-		public :
-			function_base_wrapper() {}
-			virtual ~function_base_wrapper() {}
-
-		public :
-			virtual RT operator ()() { return RT(); }
-			blank_expand(VFUN0_EXPAND, 9)
-		};
-
 		//	无参普通C函数版本
 		template <typename RT>
-		struct function_cstyle_wrapper : function_base_wrapper<RT>, function_wrapper<RT>
+		struct function_cstyle_wrapper : function_wrapper<RT>
 		{
 			typedef RT(*FUN)();
 
@@ -60,7 +43,15 @@ namespace bas
 
 		public :
 			virtual RT operator ()() { if(fun_) return fun_(); return RT(); }
-			blank_expand(VFUN0_EXPAND, 9)
+			virtual RT operator ()(int) { return RT(); }
+			virtual RT operator ()(int, int) { return RT(); }
+			virtual RT operator ()(int, int, int) { return RT(); }
+			virtual RT operator ()(int, int, int, int) { return RT(); }
+			virtual RT operator ()(int, int, int, int, int) { return RT(); }
+			virtual RT operator ()(int, int, int, int, int, int) { return RT(); }
+			virtual RT operator ()(int, int, int, int, int, int, int) { return RT(); }
+			virtual RT operator ()(int, int, int, int, int, int, int, int) { return RT(); }
+			virtual RT operator ()(int, int, int, int, int, int, int, int, int) { return RT(); }
 
 		public :
 			FUN fun_;
@@ -68,7 +59,7 @@ namespace bas
 
 		//	无参成员函数版本
 		template <typename CT, typename RT>
-		struct function_mem_wrapper : function_base_wrapper<RT>, function_wrapper<RT>
+		struct function_mem_wrapper : function_wrapper<RT>
 		{
 			typedef RT(CT::*CFUN)();
 
@@ -80,7 +71,15 @@ namespace bas
 
 		public :
 			virtual RT operator ()() { if(self_&&fun_) return (self_->*fun_)(); return RT(); }
-			blank_expand(VFUN0_EXPAND, 9)
+			virtual RT operator ()(int) { return RT(); }
+			virtual RT operator ()(int, int) { return RT(); }
+			virtual RT operator ()(int, int, int) { return RT(); }
+			virtual RT operator ()(int, int, int, int) { return RT(); }
+			virtual RT operator ()(int, int, int, int, int) { return RT(); }
+			virtual RT operator ()(int, int, int, int, int, int) { return RT(); }
+			virtual RT operator ()(int, int, int, int, int, int, int) { return RT(); }
+			virtual RT operator ()(int, int, int, int, int, int, int, int) { return RT(); }
+			virtual RT operator ()(int, int, int, int, int, int, int, int, int) { return RT(); }
 
 		public :
 			CFUN fun_;
@@ -89,31 +88,9 @@ namespace bas
 		};
 
 		//////////////////////////////////////////////////////////////////////////
-		//	wrapper基类
-		//	1参数版本
-		template <typename RT, typename P1>
-		struct function_base_wrapper_1
-		{
-		public :
-			function_base_wrapper_1() {}
-			virtual ~function_base_wrapper_1() {}
-
-		public :
-			virtual RT operator ()() { return RT(); }
-			virtual RT operator ()(P1) { return RT(); }
-			virtual RT operator ()(P1, int) { return RT(); }
-			virtual RT operator ()(P1, int, int) { return RT(); }
-			virtual RT operator ()(P1, int, int, int) { return RT(); }
-			virtual RT operator ()(P1, int, int, int, int) { return RT(); }
-			virtual RT operator ()(P1, int, int, int, int, int) { return RT(); }
-			virtual RT operator ()(P1, int, int, int, int, int, int) { return RT(); }
-			virtual RT operator ()(P1, int, int, int, int, int, int, int) { return RT(); }
-			virtual RT operator ()(P1, int, int, int, int, int, int, int, int) { return RT(); }
-		};
-
 		//	1参数普通C函数版本
 		template <typename RT, typename P1, typename PH1>
-		struct function_cstyle_wrapper_1 : function_base_wrapper_1<RT, P1>, function_wrapper<RT, P1>
+		struct function_cstyle_wrapper_1 : function_wrapper<RT, P1>
 		{
 			typedef RT(*FUN)(P1);
 
@@ -151,7 +128,7 @@ namespace bas
 
 		//	1参数成员函数版本
 		template <typename CT, typename RT, typename P1, typename PH1>
-		struct function_mem_wrapper_1 : function_base_wrapper_1<RT, P1>, function_wrapper<RT, P1>
+		struct function_mem_wrapper_1 : function_wrapper<RT, P1>
 		{
 			typedef RT(CT::*CFUN)(P1);
 
@@ -189,33 +166,10 @@ namespace bas
 		};
 
 		//////////////////////////////////////////////////////////////////////////
-		//	wrapper基类
-		//	2参数版本
-		template <typename RT, typename P1, typename P2>
-		struct function_base_wrapper_2
-		{
-		public :
-			function_base_wrapper_2() {}
-			virtual ~function_base_wrapper_2() {}
-
-		public :
-			virtual RT operator ()() { return RT(); }
-			virtual RT operator ()(P1) { return RT(); }
-			virtual RT operator ()(P1, P2) { return RT(); }
-			virtual RT operator ()(P1, P2, int) { return RT(); }
-			virtual RT operator ()(P1, P2, int, int) { return RT(); }
-			virtual RT operator ()(P1, P2, int, int, int) { return RT(); }
-			virtual RT operator ()(P1, P2, int, int, int, int) { return RT(); }
-			virtual RT operator ()(P1, P2, int, int, int, int, int) { return RT(); }
-			virtual RT operator ()(P1, P2, int, int, int, int, int, int) { return RT(); }
-			virtual RT operator ()(P1, P2, int, int, int, int, int, int, int) { return RT(); }
-		};
-
 		//	2参数普通C函数版本
 		template <typename RT, typename P1, typename P2,
 			typename PH1, typename PH2>
-		struct function_cstyle_wrapper_2 : function_base_wrapper_2<RT, P1, P2>
-			, function_wrapper<RT, P1, P2>
+		struct function_cstyle_wrapper_2 : function_wrapper<RT, P1, P2>
 		{
 			typedef RT(*FUN)(P1, P2);
 
@@ -260,8 +214,7 @@ namespace bas
 		//	2参数成员函数版本
 		template <typename CT, typename RT, typename P1, typename P2,
 			typename PH1, typename PH2>
-		struct function_mem_wrapper_2 : function_base_wrapper_2<RT, P1, P2>
-			, function_wrapper<RT, P1, P2>
+		struct function_mem_wrapper_2 : function_wrapper<RT, P1, P2>
 		{
 			typedef RT(CT::*CFUN)(P1, P2);
 
@@ -306,33 +259,10 @@ namespace bas
 		};
 
 		//////////////////////////////////////////////////////////////////////////
-		//	wrapper基类
-		//	3参数版本
-		template <typename RT, typename P1, typename P2, typename P3>
-		struct function_base_wrapper_3
-		{
-		public :
-			function_base_wrapper_3() {}
-			virtual ~function_base_wrapper_3() {}
-
-		public :
-			virtual RT operator ()() { return RT(); }
-			virtual RT operator ()(P1) { return RT(); }
-			virtual RT operator ()(P1, P2) { return RT(); }
-			virtual RT operator ()(P1, P2, P3) { return RT(); }
-			virtual RT operator ()(P1, P2, P3, int) { return RT(); }
-			virtual RT operator ()(P1, P2, P3, int, int) { return RT(); }
-			virtual RT operator ()(P1, P2, P3, int, int, int) { return RT(); }
-			virtual RT operator ()(P1, P2, P3, int, int, int, int) { return RT(); }
-			virtual RT operator ()(P1, P2, P3, int, int, int, int, int) { return RT(); }
-			virtual RT operator ()(P1, P2, P3, int, int, int, int, int, int) { return RT(); }
-		};
-
 		//	3参数普通C函数版本
 		template <typename RT, typename P1, typename P2, typename P3,
 			typename PH1, typename PH2, typename PH3>
-		struct function_cstyle_wrapper_3 : function_base_wrapper_3<RT, P1, P2, P3>
-			, function_wrapper<RT, P1, P2, P3>
+		struct function_cstyle_wrapper_3 : function_wrapper<RT, P1, P2, P3>
 		{
 			typedef RT(*FUN)(P1, P2, P3);
 
@@ -381,8 +311,7 @@ namespace bas
 		//	3参数成员函数版本
 		template <typename CT, typename RT, typename P1, typename P2, typename P3,
 			typename PH1, typename PH2, typename PH3>
-		struct function_mem_wrapper_3 : function_base_wrapper_3<RT, P1, P2, P3>
-			, function_wrapper<RT, P1, P2, P3>
+		struct function_mem_wrapper_3 : function_wrapper<RT, P1, P2, P3>
 		{
 			typedef RT(CT::*CFUN)(P1, P2, P3);
 
@@ -433,33 +362,10 @@ namespace bas
 		};
 
 		//////////////////////////////////////////////////////////////////////////
-		//	wrapper基类
-		//	4参数版本
-		template <typename RT, typename P1, typename P2, typename P3, typename P4>
-		struct function_base_wrapper_4
-		{
-		public :
-			function_base_wrapper_4() {}
-			virtual ~function_base_wrapper_4() {}
-
-		public :
-			virtual RT operator ()() { return RT(); }
-			virtual RT operator ()(P1) { return RT(); }
-			virtual RT operator ()(P1, P2) { return RT(); }
-			virtual RT operator ()(P1, P2, P3) { return RT(); }
-			virtual RT operator ()(P1, P2, P3, P4) { return RT(); }
-			virtual RT operator ()(P1, P2, P3, P4, int) { return RT(); }
-			virtual RT operator ()(P1, P2, P3, P4, int, int) { return RT(); }
-			virtual RT operator ()(P1, P2, P3, P4, int, int, int) { return RT(); }
-			virtual RT operator ()(P1, P2, P3, P4, int, int, int, int) { return RT(); }
-			virtual RT operator ()(P1, P2, P3, P4, int, int, int, int, int) { return RT(); }
-		};
-
 		//	4参数普通C函数版本
 		template <typename RT, typename P1, typename P2, typename P3, typename P4,
 			typename PH1, typename PH2, typename PH3, typename PH4>
-		struct function_cstyle_wrapper_4 : function_base_wrapper_4<RT, P1, P2, P3, P4>
-			, function_wrapper<RT, P1, P2, P3, P4>
+		struct function_cstyle_wrapper_4 : function_wrapper<RT, P1, P2, P3, P4>
 		{
 			typedef RT(*FUN)(P1, P2, P3, P4);
 
@@ -515,8 +421,7 @@ namespace bas
 		//	4参数成员函数版本
 		template <typename CT, typename RT, typename P1, typename P2, typename P3, typename P4,
 			typename PH1, typename PH2, typename PH3, typename PH4>
-		struct function_mem_wrapper_4 : function_base_wrapper_4<RT, P1, P2, P3, P4>
-			, function_wrapper<RT, P1, P2, P3, P4>
+		struct function_mem_wrapper_4 : function_wrapper<RT, P1, P2, P3, P4>
 		{
 			typedef RT(CT::*CFUN)(P1, P2, P3, P4);
 
@@ -574,33 +479,10 @@ namespace bas
 		};
 
 		//////////////////////////////////////////////////////////////////////////
-		//	wrapper基类
-		//	5参数版本
-		template <typename RT, typename P1, typename P2, typename P3, typename P4, typename P5>
-		struct function_base_wrapper_5
-		{
-		public :
-			function_base_wrapper_5() {}
-			virtual ~function_base_wrapper_5() {}
-
-		public :
-			virtual RT operator ()() { return RT(); }
-			virtual RT operator ()(P1) { return RT(); }
-			virtual RT operator ()(P1, P2) { return RT(); }
-			virtual RT operator ()(P1, P2, P3) { return RT(); }
-			virtual RT operator ()(P1, P2, P3, P4) { return RT(); }
-			virtual RT operator ()(P1, P2, P3, P4, P5) { return RT(); }
-			virtual RT operator ()(P1, P2, P3, P4, P5, int) { return RT(); }
-			virtual RT operator ()(P1, P2, P3, P4, P5, int, int) { return RT(); }
-			virtual RT operator ()(P1, P2, P3, P4, P5, int, int, int) { return RT(); }
-			virtual RT operator ()(P1, P2, P3, P4, P5, int, int, int, int) { return RT(); }
-		};
-
 		//	5参数普通C函数版本
 		template <typename RT, typename P1, typename P2, typename P3, typename P4, typename P5,
 			typename PH1, typename PH2, typename PH3, typename PH4, typename PH5>
-		struct function_cstyle_wrapper_5 : function_base_wrapper_5<RT, P1, P2, P3, P4, P5>
-			, function_wrapper<RT, P1, P2, P3, P4, P5>
+		struct function_cstyle_wrapper_5 : function_wrapper<RT, P1, P2, P3, P4, P5>
 		{
 			typedef RT(*FUN)(P1, P2, P3, P4, P5);
 
@@ -664,8 +546,7 @@ namespace bas
 		//	5参数成员函数版本
 		template <typename CT, typename RT, typename P1, typename P2, typename P3, typename P4, typename P5,
 			typename PH1, typename PH2, typename PH3, typename PH4, typename PH5>
-		struct function_mem_wrapper_5 : function_base_wrapper_5<RT, P1, P2, P3, P4, P5>
-			, function_wrapper<RT, P1, P2, P3, P4, P5>
+		struct function_mem_wrapper_5 : function_wrapper<RT, P1, P2, P3, P4, P5>
 		{
 			typedef RT(CT::*CFUN)(P1, P2, P3, P4, P5);
 
@@ -731,33 +612,10 @@ namespace bas
 		};
 
 		//////////////////////////////////////////////////////////////////////////
-		//	wrapper基类
-		//	6参数版本
-		template <typename RT, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6>
-		struct function_base_wrapper_6
-		{
-		public :
-			function_base_wrapper_6() {}
-			virtual ~function_base_wrapper_6() {}
-
-		public :
-			virtual RT operator ()() { return RT(); }
-			virtual RT operator ()(P1) { return RT(); }
-			virtual RT operator ()(P1, P2) { return RT(); }
-			virtual RT operator ()(P1, P2, P3) { return RT(); }
-			virtual RT operator ()(P1, P2, P3, P4) { return RT(); }
-			virtual RT operator ()(P1, P2, P3, P4, P5) { return RT(); }
-			virtual RT operator ()(P1, P2, P3, P4, P5, P6) { return RT(); }
-			virtual RT operator ()(P1, P2, P3, P4, P5, P6, int) { return RT(); }
-			virtual RT operator ()(P1, P2, P3, P4, P5, P6, int, int) { return RT(); }
-			virtual RT operator ()(P1, P2, P3, P4, P5, P6, int, int, int) { return RT(); }
-		};
-
 		//	6参数普通C函数版本
 		template <typename RT, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6,
 			typename PH1, typename PH2, typename PH3, typename PH4, typename PH5, typename PH6>
-		struct function_cstyle_wrapper_6 : function_base_wrapper_6<RT, P1, P2, P3, P4, P5, P6>
-			, function_wrapper<RT, P1, P2, P3, P4, P5, P6>
+		struct function_cstyle_wrapper_6 : function_wrapper<RT, P1, P2, P3, P4, P5, P6>
 		{
 			typedef RT(*FUN)(P1, P2, P3, P4, P5, P6);
 
@@ -830,8 +688,7 @@ namespace bas
 		//	6参数成员函数版本
 		template <typename CT, typename RT, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6,
 			typename PH1, typename PH2, typename PH3, typename PH4, typename PH5, typename PH6>
-		struct function_mem_wrapper_6 : function_base_wrapper_6<RT, P1, P2, P3, P4, P5, P6>
-			, function_wrapper<RT, P1, P2, P3, P4, P5, P6>
+		struct function_mem_wrapper_6 : function_wrapper<RT, P1, P2, P3, P4, P5, P6>
 		{
 			typedef RT(CT::*CFUN)(P1, P2, P3, P4, P5, P6);
 
@@ -906,33 +763,10 @@ namespace bas
 		};
 
 		//////////////////////////////////////////////////////////////////////////
-		//	wrapper基类
-		//	7参数版本
-		template <typename RT, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7>
-		struct function_base_wrapper_7
-		{
-		public :
-			function_base_wrapper_7() {}
-			virtual ~function_base_wrapper_7() {}
-
-		public :
-			virtual RT operator ()() { return RT(); }
-			virtual RT operator ()(P1) { return RT(); }
-			virtual RT operator ()(P1, P2) { return RT(); }
-			virtual RT operator ()(P1, P2, P3) { return RT(); }
-			virtual RT operator ()(P1, P2, P3, P4) { return RT(); }
-			virtual RT operator ()(P1, P2, P3, P4, P5) { return RT(); }
-			virtual RT operator ()(P1, P2, P3, P4, P5, P6) { return RT(); }
-			virtual RT operator ()(P1, P2, P3, P4, P5, P6, P7) { return RT(); }
-			virtual RT operator ()(P1, P2, P3, P4, P5, P6, P7, int) { return RT(); }
-			virtual RT operator ()(P1, P2, P3, P4, P5, P6, P7, int, int) { return RT(); }
-		};
-
 		//	7参数普通C函数版本
 		template <typename RT, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7,
 			typename PH1, typename PH2, typename PH3, typename PH4, typename PH5, typename PH6, typename PH7>
-		struct function_cstyle_wrapper_7 : function_base_wrapper_7<RT, P1, P2, P3, P4, P5, P6, P7>
-			, function_wrapper<RT, P1, P2, P3, P4, P5, P6, P7>
+		struct function_cstyle_wrapper_7 : function_wrapper<RT, P1, P2, P3, P4, P5, P6, P7>
 		{
 			typedef RT(*FUN)(P1, P2, P3, P4, P5, P6, P7);
 
@@ -1015,8 +849,7 @@ namespace bas
 		//	7参数成员函数版本
 		template <typename CT, typename RT, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7,
 			typename PH1, typename PH2, typename PH3, typename PH4, typename PH5, typename PH6, typename PH7>
-		struct function_mem_wrapper_7 : function_base_wrapper_7<RT, P1, P2, P3, P4, P5, P6, P7>
-			, function_wrapper<RT, P1, P2, P3, P4, P5, P6, P7>
+		struct function_mem_wrapper_7 : function_wrapper<RT, P1, P2, P3, P4, P5, P6, P7>
 		{
 			typedef RT(CT::*CFUN)(P1, P2, P3, P4, P5, P6, P7);
 
@@ -1101,33 +934,10 @@ namespace bas
 		};
 
 		//////////////////////////////////////////////////////////////////////////
-		//	wrapper基类
-		//	8参数版本
-		template <typename RT, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7, typename P8>
-		struct function_base_wrapper_8
-		{
-		public :
-			function_base_wrapper_8() {}
-			virtual ~function_base_wrapper_8() {}
-
-		public :
-			virtual RT operator ()() { return RT(); }
-			virtual RT operator ()(P1) { return RT(); }
-			virtual RT operator ()(P1, P2) { return RT(); }
-			virtual RT operator ()(P1, P2, P3) { return RT(); }
-			virtual RT operator ()(P1, P2, P3, P4) { return RT(); }
-			virtual RT operator ()(P1, P2, P3, P4, P5) { return RT(); }
-			virtual RT operator ()(P1, P2, P3, P4, P5, P6) { return RT(); }
-			virtual RT operator ()(P1, P2, P3, P4, P5, P6, P7) { return RT(); }
-			virtual RT operator ()(P1, P2, P3, P4, P5, P6, P7, P8) { return RT(); }
-			virtual RT operator ()(P1, P2, P3, P4, P5, P6, P7, P8, int) { return RT(); }
-		};
-
 		//	8参数普通C函数版本
 		template <typename RT, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7, typename P8,
 			typename PH1, typename PH2, typename PH3, typename PH4, typename PH5, typename PH6, typename PH7, typename PH8>
-		struct function_cstyle_wrapper_8 : function_base_wrapper_8<RT, P1, P2, P3, P4, P5, P6, P7, P8>
-			, function_wrapper<RT, P1, P2, P3, P4, P5, P6, P7, P8>
+		struct function_cstyle_wrapper_8 : function_wrapper<RT, P1, P2, P3, P4, P5, P6, P7, P8>
 		{
 			typedef RT(*FUN)(P1, P2, P3, P4, P5, P6, P7, P8);
 
@@ -1221,8 +1031,7 @@ namespace bas
 		//	8参数成员函数版本
 		template <typename CT, typename RT, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7, typename P8,
 			typename PH1, typename PH2, typename PH3, typename PH4, typename PH5, typename PH6, typename PH7, typename PH8>
-		struct function_mem_wrapper_8 : function_base_wrapper_8<RT, P1, P2, P3, P4, P5, P6, P7, P8>
-			, function_wrapper<RT, P1, P2, P3, P4, P5, P6, P7, P8>
+		struct function_mem_wrapper_8 : function_wrapper<RT, P1, P2, P3, P4, P5, P6, P7, P8>
 		{
 			typedef RT(CT::*CFUN)(P1, P2, P3, P4, P5, P6, P7, P8);
 
@@ -1318,33 +1127,10 @@ namespace bas
 		};
 
 		//////////////////////////////////////////////////////////////////////////
-		//	wrapper基类
-		//	9参数版本
-		template <typename RT, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7, typename P8, typename P9>
-		struct function_base_wrapper_9
-		{
-		public :
-			function_base_wrapper_9() {}
-			virtual ~function_base_wrapper_9() {}
-
-		public :
-			virtual RT operator ()() { return RT(); }
-			virtual RT operator ()(P1) { return RT(); }
-			virtual RT operator ()(P1, P2) { return RT(); }
-			virtual RT operator ()(P1, P2, P3) { return RT(); }
-			virtual RT operator ()(P1, P2, P3, P4) { return RT(); }
-			virtual RT operator ()(P1, P2, P3, P4, P5) { return RT(); }
-			virtual RT operator ()(P1, P2, P3, P4, P5, P6) { return RT(); }
-			virtual RT operator ()(P1, P2, P3, P4, P5, P6, P7) { return RT(); }
-			virtual RT operator ()(P1, P2, P3, P4, P5, P6, P7, P8) { return RT(); }
-			virtual RT operator ()(P1, P2, P3, P4, P5, P6, P7, P8, P9) { return RT(); }
-		};
-
 		//	9参数普通C函数版本
 		template <typename RT, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7, typename P8, typename P9,
 			typename PH1, typename PH2, typename PH3, typename PH4, typename PH5, typename PH6, typename PH7, typename PH8, typename PH9>
-		struct function_cstyle_wrapper_9 : function_base_wrapper_9<RT, P1, P2, P3, P4, P5, P6, P7, P8, P9>
-			, function_wrapper<RT, P1, P2, P3, P4, P5, P6, P7, P8, P9>
+		struct function_cstyle_wrapper_9 : function_wrapper<RT, P1, P2, P3, P4, P5, P6, P7, P8, P9>
 		{
 			typedef RT(*FUN)(P1, P2, P3, P4, P5, P6, P7, P8, P9);
 
@@ -1450,8 +1236,7 @@ namespace bas
 		//	9参数成员函数版本
 		template <typename CT, typename RT, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7, typename P8, typename P9,
 			typename PH1, typename PH2, typename PH3, typename PH4, typename PH5, typename PH6, typename PH7, typename PH8, typename PH9>
-		struct function_mem_wrapper_9 : function_base_wrapper_9<RT, P1, P2, P3, P4, P5, P6, P7, P8, P9>
-			, function_wrapper<RT, P1, P2, P3, P4, P5, P6, P7, P8, P9>
+		struct function_mem_wrapper_9 : function_wrapper<RT, P1, P2, P3, P4, P5, P6, P7, P8, P9>
 		{
 			typedef RT(CT::*CFUN)(P1, P2, P3, P4, P5, P6, P7, P8, P9);
 

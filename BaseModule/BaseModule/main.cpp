@@ -1,3 +1,4 @@
+#include <win32_plat.hpp>
 #include <activeobject.hpp>
 #include <bio.hpp>
 #include <function.hpp>
@@ -5,15 +6,19 @@
 #include <auto_ptr.hpp>
 #include <stdio.h>
 #include <socket.hpp>
+#include <demo.hpp>
+#include <stdio.h>
 #include <windows.h>
 namespace base = bas::detail;
+
+bas_init();
 
 struct A : base::bio_bas_t<A>
 {
 	A() { printf("A Constructor\n"); }
 	~A() { printf("A Destructor\n"); }
 
-	void f0() {}
+	void f0() { printf("f0\n"); }
 	void f1(int i) { printf("f1 : %d\n", i); }
 	void f2(int p1, int p2) { printf("f2 : %d %d\n", p1, p2); }
 	void f3(int p1, char p2, int p3) { printf("f3 : %d %c %d\n", p1, p2, p3); }
@@ -82,7 +87,26 @@ char g_recv_buf[1024] = {};
 void OnRecv(int bt, int err)
 {
 	printf("Receive Message : %s\n", g_recv_buf);
-	g_sock.asyn_recv(g_recv_buf, 12, base::bind(&OnRecv, base::_1, base::_2));
+
+	std::string resp = g_recv_buf;
+	int st = resp.find("Set-Cookie: ");
+	st += strlen("Set-Cookie: ");
+	int ed = resp.find("\r\n", st);
+	std::string cookie = resp.substr(st, ed - st);
+
+	static int flag = 1;
+	if(flag == 1)
+	{
+		//std::string req = "GET /AttendanceSys/Query/PersonalPage.aspx/ HTTP/1.1\r\nHost: attendance.sicent.com\r\nConnection: keep-alive\r\nCookie: ";
+		std::string req = "GET /AttendanceSys/ HTTP/1.1\r\nHost: attendance.sicent.com\r\nConnection: keep-alive\r\nCookie: ";
+		req += cookie;
+		req += "\r\n\r\n\r\n";
+		g_sock.asyn_send(const_cast<char*>(req.c_str()), req.length(), base::socket_t::send_callback());
+		flag = 0;
+	}
+
+	memset((void*)g_recv_buf, 0, sizeof(g_recv_buf));
+	g_sock.asyn_recv_some(g_recv_buf, 1023, base::bind(&OnRecv, base::_1, base::_2));
 }
 
 void OnConnect(base::socket_t sock, int err)
@@ -93,9 +117,19 @@ void OnConnect(base::socket_t sock, int err)
 	}
 	else
 	{
+		std::string req = "POST /AttendanceSys/main/login.aspx HTTP/1.1\r\nHost: attendance.sicent.com\r\nConnection: keep-alive\r\nContent-Length: ";
+		char auth_info[] = "txtUserName=yuxingchen&txtPassword=abcd1234.";
+		char str_len[10] = {};
+		sprintf(str_len, "%d", strlen(auth_info));
+		req += str_len;
+		req += "\r\n\r\n\r\n";
+		req += auth_info;
+
 		printf("connect success\n");
 		g_sock = sock;
-		g_sock.asyn_recv(g_recv_buf, 12, base::bind(&OnRecv, base::_1, base::_2));
+		g_sock.asyn_send(const_cast<char*>(req.c_str()), req.length(), base::socket_t::send_callback());
+		memset((void*)g_recv_buf, 0, sizeof(g_recv_buf));
+		g_sock.asyn_recv_some(g_recv_buf, 1023, base::bind(&OnRecv, base::_1, base::_2));
 	}
 }
 
@@ -108,16 +142,21 @@ void OnAccept(base::socket_t sock, int err)
 	else
 	{
 		printf("Accept success\n");
+		g_sock = sock;
+		memset((void*)g_recv_buf, 0, sizeof(g_recv_buf));
+		g_sock.asyn_send("aaa", strlen("aaa"), base::socket_t::send_callback());
+		g_sock.asyn_recv_some(g_recv_buf, 1023, base::bind(&OnRecv, base::_1, base::_2));
 	}
 }
 
+//	TODO 注意两个全局变量的编译问题
 void main()
 {
 	{
 		base::function<void ()> fo;
 		{
 			A* a = new A;
-			fo = base::bind(&A::f0, bas::retain(a));
+			fo = base::bind(&A::f0, a);
 			a->release();
 			fo();
 		}
@@ -161,10 +200,34 @@ void main()
  	bas::default_thread_pool()->run();
 	base::connector_t co;
 	//co.asyn_connect("10.34.43.55", 8869, base::bind(OnConnect, base::_1, base::_2), 5000);
-	co.asyn_connect("www.winxuan.com", 80, base::bind(OnConnect, base::_1, base::_2), 5000);
+	//co.asyn_connect("attendance.sicent.com", 80, base::bind(OnConnect, base::_1, base::_2), 5000);
 
-// 	base::acceptor_t acpt;
-// 	acpt.asyn_accept(0, 8869, bind(&OnAccept, base::_1, base::_2));
+	{
+		base::acceptor_t* acpt = new base::acceptor_t;
+		acpt->asyn_accept(0, 8869, bind(&OnAccept, base::_1, base::_2));
+		//acpt->stop();
+		//acpt->release();
+	}
+
+	base::signal<void()> sig;
+	sig.slot(fo0);
+	sig.slot(fo0);
+	sig.slot(fo0);
+	sig.slot(fo0);
+	sig.slot(fo0);
+	sig();
+
+	base::signal<void(int)> sig1;
+	sig1.slot(fo1);
+	sig1.slot(fo1);
+	sig1.slot(fo1);
+	sig1(5);
+
+	base::signal<void(int, int)> sig2;
+	sig2.slot(fo2);
+	sig2.slot(fo2);
+	sig2.slot(fo2);
+	sig2(5, 6);
 
 	SuspendThread(GetCurrentThread());
 }

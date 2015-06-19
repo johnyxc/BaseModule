@@ -120,13 +120,13 @@ namespace bas
 				memcpy((void*)bf->buffer_get_buf(), (void*)buf, len);
 				bf->buffer_set_len(len);
 
-				//	每次调用都是一次性发送行为
-				if(cur_wr_evt_) default_thread_pool()->remove(cur_wr_evt_);
-				cur_wr_evt_ = default_thread_pool()->post(sock_, EV_WRITE, bind(&socket_t::i_on_send, bas::retain(this), _1, _2, bf, cb));
-
 				int bt = ::send(sock_, bf->buffer_get_buf(), bf->buffer_get_len(), 0);
 				if(bt <= 0) { delete bf; return false; }
 				bf->buffer_set_pro_len(bf->buffer_get_pro_len() + bt);
+
+				//	每次调用都是一次性发送行为
+				if(cur_wr_evt_) default_thread_pool()->remove(cur_wr_evt_);
+				cur_wr_evt_ = default_thread_pool()->post(sock_, EV_WRITE, bind(&socket_t::i_on_send, bas::retain(this), _1, _2, bf, cb));
 
 				return true;
 			}
@@ -159,7 +159,7 @@ namespace bas
 				if(bt <= 0)
 				{	//	错误事件
 					delete buf;
-					i_err_occur(bt);
+					i_err_occur(bt, cur_rd_evt_);
 					return;
 				}
 
@@ -210,8 +210,22 @@ namespace bas
 				}
 			}
 
-			void i_err_occur(int err)
+			void i_err_occur(int err, event* evt)
 			{
+				if(cur_wr_evt_ == evt)
+				{
+					default_thread_pool()->remove(cur_wr_evt_);
+					cur_wr_evt_ = 0;
+					default_thread_pool()->remove(cur_rd_evt_, true);
+					cur_rd_evt_ = 0;
+				}
+				else if(cur_rd_evt_ == evt)
+				{
+					default_thread_pool()->remove(cur_wr_evt_, true);
+					cur_wr_evt_ = 0;
+					default_thread_pool()->remove(cur_rd_evt_);
+					cur_rd_evt_ = 0;
+				}
 				err_cb_(err);
 			}
 
@@ -243,7 +257,7 @@ namespace bas
 			event* cur_rd_evt_;
 		};
 
-		//	解析对象
+		//	域名解析对象
 		struct resolver_t : bio_bas_t<resolver_t>
 		{
 			typedef function<void (std::vector<auto_ptr<char> >, int)> resolve_callback;
@@ -262,7 +276,7 @@ namespace bas
 			bool asyn_resolve(const char* url, resolve_callback cb)
 			{
 				resolve_info* ri = new resolve_info;
-				strcpy(ri->url, url);
+				strncpy(ri->url, url, strlen(url));
 				ri->cb	= cb;
 				::CreateThread(0, 0, i_on_resolve, (LPVOID)ri, 0, 0);
 				return true;
@@ -281,7 +295,9 @@ namespace bas
 					while(host->h_addr_list[idx] != 0)
 					{
 						auto_ptr<char> addr = new char[16];
-						strcpy(addr.raw_ptr(), inet_ntoa(*(in_addr*)host->h_addr_list[idx++]));
+						char* ip_addr = inet_ntoa(*(in_addr*)host->h_addr_list[idx++]);
+						if(!ip_addr) continue;
+						strncpy(addr.raw_ptr(), ip_addr, strlen(ip_addr));
 						addr.raw_ptr()[15] = '\0';
 						addr_list.push_back(addr);
 					}
