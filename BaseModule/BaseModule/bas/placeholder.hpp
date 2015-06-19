@@ -47,72 +47,72 @@ namespace bas
 		template <typename P1, typename P2>
 		struct ArgStorage2 : ArgStorage1<P1>
 		{
-			ArgStorage2(P1 p1, P2 p2) : ArgStorage1(p1), p2_(p2) {}
-			ArgStorage2(const ArgStorage2& ao) : ArgStorage1(ao.p1_) { p2_ = ao.p2_; }
-			ArgStorage2& operator = (const ArgStorage2& ao) { p1_ = ao.p1_; p2_ = ao.p2_; return *this; }
+			ArgStorage2(P1 p1, P2 p2) : ArgStorage1<P1>(p1), p2_(p2) {}
+			ArgStorage2(const ArgStorage2& ao) : ArgStorage1<P1>(ao.p1_) { p2_ = ao.p2_; }
+			ArgStorage2& operator = (const ArgStorage2& ao) { this->p1_ = ao.p1_; p2_ = ao.p2_; return *this; }
 			P2 p2_;
 		};
 
 		template <typename P1, typename P2, typename P3>
 		struct ArgStorage3 : ArgStorage2<P1, P2>
 		{
-			ArgStorage3(P1 p1, P2 p2, P3 p3) : ArgStorage2(p1, p2), p3_(p3) {}
-			ArgStorage3(const ArgStorage3& ao) : ArgStorage2(ao.p1_, ao.p2_) { p3_ = ao.p3_; }
-			ArgStorage3& operator = (const ArgStorage3& ao) { p1_ = ao.p1_; p2_ = ao.p2_; p3_ = ao.p3_; return *this; }
+			ArgStorage3(P1 p1, P2 p2, P3 p3) : ArgStorage2<P1, P2>(p1, p2), p3_(p3) {}
+			ArgStorage3(const ArgStorage3& ao) : ArgStorage2<P1, P2>(ao.p1_, ao.p2_) { p3_ = ao.p3_; }
+			ArgStorage3& operator = (const ArgStorage3& ao) { this->p1_ = ao.p1_; this->p2_ = ao.p2_; p3_ = ao.p3_; return *this; }
 			P3 p3_;
 		};
 
 		template <typename P1, typename P2, typename P3, typename P4>
 		struct ArgStorage4 : ArgStorage3<P1, P2, P3>
 		{
-			ArgStorage4(P1 p1, P2 p2, P3 p3, P4 p4) : ArgStorage3(p1, p2, p3), p4_(p4) {}
-			ArgStorage4(const ArgStorage4& ao) : ArgStorage3(ao.p1_, ao.p2_, ao.p3_) { p4_ = ao.p4_; }
-			ArgStorage4& operator = (const ArgStorage4& ao) { p1_ = ao.p1_; p2_ = ao.p2_; p3_ = ao.p3_; p4_ = ao.p4_; return *this; }
+			ArgStorage4(P1 p1, P2 p2, P3 p3, P4 p4) : ArgStorage3<P1, P2, P3>(p1, p2, p3), p4_(p4) {}
+			ArgStorage4(const ArgStorage4& ao) : ArgStorage3<P1, P2, P3>(ao.p1_, ao.p2_, ao.p3_) { p4_ = ao.p4_; }
+			ArgStorage4& operator = (const ArgStorage4& ao) { this->p1_ = ao.p1_; this->p2_ = ao.p2_; this->p3_ = ao.p3_; p4_ = ao.p4_; return *this; }
 			P4 p4_;
 		};
 
 		template <typename P1, typename P2, typename P3, typename P4, typename P5>
 		struct ArgStorage5 : ArgStorage4<P1, P2, P3, P4>
 		{
-			ArgStorage5(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5) : ArgStorage4(p1, p2, p3, p4), p5_(p5) {}
-			ArgStorage5(const ArgStorage5& ao) : ArgStorage4(ao.p1_, ao.p2_, ao.p3_, ao.p4_) { p5_ = ao.p5_; }
-			ArgStorage5& operator = (const ArgStorage5& ao) { p1_ = ao.p1_; p2_ = ao.p2_; p3_ = ao.p3_; p4_ = ao.p4_; p5_ = ao.p5_; return *this; }
+			ArgStorage5(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5) : ArgStorage4<P1, P2, P3, P4>(p1, p2, p3, p4), p5_(p5) {}
+			ArgStorage5(const ArgStorage5& ao) : ArgStorage4<P1, P2, P3, P4>(ao.p1_, ao.p2_, ao.p3_, ao.p4_) { p5_ = ao.p5_; }
+			ArgStorage5& operator = (const ArgStorage5& ao) { this->p1_ = ao.p1_; this->p2_ = ao.p2_; this->p3_ = ao.p3_; this->p4_ = ao.p4_; p5_ = ao.p5_; return *this; }
 			P5 p5_;
 		};
 
 		template <typename P1, typename P2, typename P3, typename P4, typename P5, typename P6>
 		struct ArgStorage6 : ArgStorage5<P1, P2, P3, P4, P5>
 		{
-			ArgStorage6(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6) : ArgStorage5(p1, p2, p3, p4, p5), p6_(p6) {}
-			ArgStorage6(const ArgStorage6& ao) : ArgStorage5(ao.p1_, ao.p2_, ao.p3_, ao.p4_, ao.p5_) { p6_ = ao.p6_; }
-			ArgStorage6& operator = (const ArgStorage6& ao) { p1_ = ao.p1_; p2_ = ao.p2_; p3_ = ao.p3_; p4_ = ao.p4_; p5_ = ao.p5_; p6_ = ao.p6_; return *this; }
+			ArgStorage6(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6) : ArgStorage5<P1, P2, P3, P4, P5>(p1, p2, p3, p4, p5), p6_(p6) {}
+			ArgStorage6(const ArgStorage6& ao) : ArgStorage5<P1, P2, P3, P4, P5>(ao.p1_, ao.p2_, ao.p3_, ao.p4_, ao.p5_) { p6_ = ao.p6_; }
+			ArgStorage6& operator = (const ArgStorage6& ao) { this->p1_ = ao.p1_; this->p2_ = ao.p2_; this->p3_ = ao.p3_; this->p4_ = ao.p4_; this->p5_ = ao.p5_; p6_ = ao.p6_; return *this; }
 			P6 p6_;
 		};
 
 		template <typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7>
 		struct ArgStorage7 : ArgStorage6<P1, P2, P3, P4, P5, P6>
 		{
-			ArgStorage7(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7) : ArgStorage6(p1, p2, p3, p4, p5, p6), p7_(p7) {}
-			ArgStorage7(const ArgStorage7& ao) : ArgStorage6(ao.p1_, ao.p2_, ao.p3_, ao.p4_, ao.p5_, ao.p6_) { p7_ = ao.p7_; }
-			ArgStorage7& operator = (const ArgStorage7& ao) { p1_ = ao.p1_; p2_ = ao.p2_; p3_ = ao.p3_; p4_ = ao.p4_; p5_ = ao.p5_; p6_ = ao.p6_; p7_ = ao.p7_; return *this; }
+			ArgStorage7(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7) : ArgStorage6<P1, P2, P3, P4, P5, P6>(p1, p2, p3, p4, p5, p6), p7_(p7) {}
+			ArgStorage7(const ArgStorage7& ao) : ArgStorage6<P1, P2, P3, P4, P5, P6>(ao.p1_, ao.p2_, ao.p3_, ao.p4_, ao.p5_, ao.p6_) { p7_ = ao.p7_; }
+			ArgStorage7& operator = (const ArgStorage7& ao) { this->p1_ = ao.p1_; this->p2_ = ao.p2_; this->p3_ = ao.p3_; this->p4_ = ao.p4_; this->p5_ = ao.p5_; this->p6_ = ao.p6_; p7_ = ao.p7_; return *this; }
 			P7 p7_;
 		};
 
 		template <typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7, typename P8>
 		struct ArgStorage8 : ArgStorage7<P1, P2, P3, P4, P5, P6, P7>
 		{
-			ArgStorage8(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7, P8 p8) : ArgStorage7(p1, p2, p3, p4, p5, p6, p7), p8_(p8) {}
-			ArgStorage8(const ArgStorage8& ao) : ArgStorage7(ao.p1_, ao.p2_, ao.p3_, ao.p4_, ao.p5_, ao.p6_, ao.p7_) { p8_ = ao.p8_; }
-			ArgStorage8& operator = (const ArgStorage8& ao) { p1_ = ao.p1_; p2_ = ao.p2_; p3_ = ao.p3_; p4_ = ao.p4_; p5_ = ao.p5_; p6_ = ao.p6_; p7_ = ao.p7_; p8_ = ao.p8_; return *this; }
+			ArgStorage8(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7, P8 p8) : ArgStorage7<P1, P2, P3, P4, P5, P6, P7>(p1, p2, p3, p4, p5, p6, p7), p8_(p8) {}
+			ArgStorage8(const ArgStorage8& ao) : ArgStorage7<P1, P2, P3, P4, P5, P6, P7>(ao.p1_, ao.p2_, ao.p3_, ao.p4_, ao.p5_, ao.p6_, ao.p7_) { p8_ = ao.p8_; }
+			ArgStorage8& operator = (const ArgStorage8& ao) { this->p1_ = ao.p1_; this->p2_ = ao.p2_; this->p3_ = ao.p3_; this->p4_ = ao.p4_; this->p5_ = ao.p5_; this->p6_ = ao.p6_; this->p7_ = ao.p7_; p8_ = ao.p8_; return *this; }
 			P8 p8_;
 		};
 
 		template <typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7, typename P8, typename P9>
 		struct ArgStorage9 : ArgStorage8<P1, P2, P3, P4, P5, P6, P7, P8>
 		{
-			ArgStorage9(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7, P8 p8, P9 p9) : ArgStorage8(p1, p2, p3, p4, p5, p6, p7, p8), p9_(p9) {}
-			ArgStorage9(const ArgStorage9& ao) : ArgStorage8(ao.p1_, ao.p2_, ao.p3_, ao.p4_, ao.p5_, ao.p6_, ao.p7_, ao.p8_) { p9_ = ao.p9_; }
-			ArgStorage9& operator = (const ArgStorage9& ao) { p1_ = ao.p1_; p2_ = ao.p2_; p3_ = ao.p3_; p4_ = ao.p4_; p5_ = ao.p5_; p6_ = ao.p6_; p7_ = ao.p7_; p8_ = ao.p8_; p9_ = ao.p9_; return *this; }
+			ArgStorage9(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7, P8 p8, P9 p9) : ArgStorage8<P1, P2, P3, P4, P5, P6, P7, P8>(p1, p2, p3, p4, p5, p6, p7, p8), p9_(p9) {}
+			ArgStorage9(const ArgStorage9& ao) : ArgStorage8<P1, P2, P3, P4, P5, P6, P7, P8>(ao.p1_, ao.p2_, ao.p3_, ao.p4_, ao.p5_, ao.p6_, ao.p7_, ao.p8_) { p9_ = ao.p9_; }
+			ArgStorage9& operator = (const ArgStorage9& ao) { this->p1_ = ao.p1_; this->p2_ = ao.p2_; this->p3_ = ao.p3_; this->p4_ = ao.p4_; this->p5_ = ao.p5_; this->p6_ = ao.p6_; this->p7_ = ao.p7_; this->p8_ = ao.p8_; p9_ = ao.p9_; return *this; }
 			P9 p9_;
 		};
 
@@ -125,7 +125,7 @@ namespace bas
 		template <typename P1>
 		struct CallList1 : ArgStorage1<P1>
 		{
-			CallList1(P1 p) : ArgStorage1(p) {}
+			CallList1(P1 p) : ArgStorage1<P1>(p) {}
 			template <typename T>
 			T operator [] (T t) { return t; }
 		};
@@ -133,7 +133,7 @@ namespace bas
 		template <comma_expand(exp_template_list, 2)>
 		struct CallList2 : ArgStorage2<comma_expand(exp_type_list, 2)>
 		{
-			CallList2(comma_expand(exp_formal_list, 2)) : ArgStorage2(comma_expand(exp_actual_list, 2)) {}
+			CallList2(comma_expand(exp_formal_list, 2)) : ArgStorage2<comma_expand(exp_type_list, 2)>(comma_expand(exp_actual_list, 2)) {}
 			template <typename T>
 			T operator [] (T t) { return t; }
 		};
@@ -141,7 +141,7 @@ namespace bas
 		template <comma_expand(exp_template_list, 3)>
 		struct CallList3 : ArgStorage3<comma_expand(exp_type_list, 3)>
 		{
-			CallList3(comma_expand(exp_formal_list, 3)) : ArgStorage3(comma_expand(exp_actual_list, 3)) {}
+			CallList3(comma_expand(exp_formal_list, 3)) : ArgStorage3<comma_expand(exp_type_list, 3)>(comma_expand(exp_actual_list, 3)) {}
 			template <typename T>
 			T operator [] (T t) { return t; }
 		};
@@ -149,7 +149,7 @@ namespace bas
 		template <comma_expand(exp_template_list, 4)>
 		struct CallList4 : ArgStorage4<comma_expand(exp_type_list, 4)>
 		{
-			CallList4(comma_expand(exp_formal_list, 4)) : ArgStorage4(comma_expand(exp_actual_list, 4)) {}
+			CallList4(comma_expand(exp_formal_list, 4)) : ArgStorage4<comma_expand(exp_type_list, 4)>(comma_expand(exp_actual_list, 4)) {}
 			template <typename T>
 			T operator [] (T t) { return t; }
 		};
@@ -157,7 +157,7 @@ namespace bas
 		template <comma_expand(exp_template_list, 5)>
 		struct CallList5 : ArgStorage5<comma_expand(exp_type_list, 5)>
 		{
-			CallList5(comma_expand(exp_formal_list, 5)) : ArgStorage5(comma_expand(exp_actual_list, 5)) {}
+			CallList5(comma_expand(exp_formal_list, 5)) : ArgStorage5<comma_expand(exp_type_list, 5)>(comma_expand(exp_actual_list, 5)) {}
 			template <typename T>
 			T operator [] (T t) { return t; }
 		};
@@ -165,7 +165,7 @@ namespace bas
 		template <comma_expand(exp_template_list, 6)>
 		struct CallList6 : ArgStorage6<comma_expand(exp_type_list, 6)>
 		{
-			CallList6(comma_expand(exp_formal_list, 6)) : ArgStorage6(comma_expand(exp_actual_list, 6)) {}
+			CallList6(comma_expand(exp_formal_list, 6)) : ArgStorage6<comma_expand(exp_type_list, 6)>(comma_expand(exp_actual_list, 6)) {}
 			template <typename T>
 			T operator [] (T t) { return t; }
 		};
@@ -173,7 +173,7 @@ namespace bas
 		template <comma_expand(exp_template_list, 7)>
 		struct CallList7 : ArgStorage7<comma_expand(exp_type_list, 7)>
 		{
-			CallList7(comma_expand(exp_formal_list, 7)) : ArgStorage7(comma_expand(exp_actual_list, 7)) {}
+			CallList7(comma_expand(exp_formal_list, 7)) : ArgStorage7<comma_expand(exp_type_list, 7)>(comma_expand(exp_actual_list, 7)) {}
 			template <typename T>
 			T operator [] (T t) { return t; }
 		};
@@ -181,7 +181,7 @@ namespace bas
 		template <comma_expand(exp_template_list, 8)>
 		struct CallList8 : ArgStorage8<comma_expand(exp_type_list, 8)>
 		{
-			CallList8(comma_expand(exp_formal_list, 8)) : ArgStorage8(comma_expand(exp_actual_list, 8)) {}
+			CallList8(comma_expand(exp_formal_list, 8)) : ArgStorage8<comma_expand(exp_type_list, 8)>(comma_expand(exp_actual_list, 8)) {}
 			template <typename T>
 			T operator [] (T t) { return t; }
 		};
@@ -189,7 +189,7 @@ namespace bas
 		template <comma_expand(exp_template_list, 9)>
 		struct CallList9 : ArgStorage9<comma_expand(exp_type_list, 9)>
 		{
-			CallList9(comma_expand(exp_formal_list, 9)) : ArgStorage9(comma_expand(exp_actual_list, 9)) {}
+			CallList9(comma_expand(exp_formal_list, 9)) : ArgStorage9<comma_expand(exp_type_list, 9)>(comma_expand(exp_actual_list, 9)) {}
 			template <typename T>
 			T operator [] (T t) { return t; }
 		};

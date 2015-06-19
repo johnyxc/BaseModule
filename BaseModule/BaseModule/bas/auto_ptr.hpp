@@ -12,9 +12,6 @@ namespace bas
 		template <typename T>
 		struct ptr_wrapper_t : bio_bas_t<ptr_wrapper_t<T> >
 		{
-			template <typename T>
-			friend struct auto_ptr;
-
 		public :
 			ptr_wrapper_t() : o_() {}
 			ptr_wrapper_t(T* o) : o_(o) {}
@@ -40,7 +37,7 @@ namespace bas
 		auto_ptr& operator = (const auto_ptr& ap) { pwt_ = ap.pwt_; pwt_->retain(); return *this; } \
 	public : \
 		T* operator -> () { if(pwt_) return pwt_->get_ptr(); return 0; } \
-		T operator * () { if(pwt_) return *pwt_->get_ptr(); return T(); } \
+		T operator * () { if(pwt_) return *pwt_->get_ptr(); return 0; } \
 		T* raw_ptr() { if(pwt_) return pwt_->get_ptr(); return 0; } \
 		ptr_wrapper_t<T>* wrapper_ptr() { return pwt_; } \
 		bool valid() { return pwt_->get_ptr() != 0; } \

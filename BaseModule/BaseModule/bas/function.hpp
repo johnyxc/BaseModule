@@ -16,7 +16,7 @@ namespace bas
 #define VFUN_EXPAND(i) \
 	virtual RT operator ()(comma_expand(exp_type_list, i)) { return RT(); }
 
-		template <typename RT, typename P1_1 = int, typename P2_2 = int, typename P3_3 = int, 
+		template <typename RT, typename P1_1 = int, typename P2_2 = int, typename P3_3 = int,
 			typename P4_4 = int, typename P5_5 = int, typename P6_6 = int,
 			typename P7_7 = int, typename P8_8 = int, typename P9_9 = int>
 		struct function_wrapper : bio_bas_t<function_wrapper<RT,
@@ -1565,7 +1565,7 @@ namespace bas
 
 			void cancel(int key)
 			{
-				std::map<int, function<RT()> >::iterator iter;
+				typename std::map<int, function<RT()> >::iterator iter;
 				iter = fo_list_.find(key);
 				if(iter == fo_list_.end()) return;
 				fo_list_.erase(iter);
@@ -1573,7 +1573,7 @@ namespace bas
 
 			RT operator ()()
 			{
-				std::map<int, function<RT()> >::iterator iter;
+				typename std::map<int, function<RT()> >::iterator iter;
 				for(iter = fo_list_.begin(); iter != fo_list_.end(); ++iter)
 				{
 					(iter->second)();
@@ -1609,7 +1609,7 @@ namespace bas
 \
 			void cancel(int key) \
 			{ \
-				std::map<int, function<RT(comma_expand(exp_type_list, i))> >::iterator iter; \
+				typename std::map<int, function<RT(comma_expand(exp_type_list, i))> >::iterator iter; \
 				iter = fo_list_.find(key); \
 				if(iter == fo_list_.end()) return; \
 				fo_list_.erase(iter); \
@@ -1617,7 +1617,7 @@ namespace bas
 \
 			RT operator ()(comma_expand(exp_formal_list, i)) \
 			{ \
-				std::map<int, function<RT(comma_expand(exp_type_list, i))> >::iterator iter; \
+				typename std::map<int, function<RT(comma_expand(exp_type_list, i))> >::iterator iter; \
 				for(iter = fo_list_.begin(); iter != fo_list_.end(); ++iter) \
 				{ \
 					(iter->second)(comma_expand(exp_actual_list, i)); \

@@ -1,6 +1,6 @@
 #ifndef __BIO_HPP_2015_06_03__
 #define __BIO_HPP_2015_06_03__
-#include <windows.h>
+#include <win32_plat.hpp>
 //////////////////////////////////////////////////////////////////////////
 
 namespace bas
@@ -15,11 +15,11 @@ namespace bas
 			~bio_bas_t() {}
 
 		public :
-			void retain() { InterlockedIncrement(&ref_); }
+			void retain() { atom_inc(&ref_); }
 
 			void release()
 			{
-				InterlockedDecrement(&ref_);
+				atom_sub(&ref_);
 				if(ref_ == 0)
 				{
 					T* obj = static_cast<T*>(this);

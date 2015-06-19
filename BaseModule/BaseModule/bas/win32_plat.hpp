@@ -1,6 +1,15 @@
 #ifndef __WIN32_PLAT_HPP_2015_06_10__
 #define __WIN32_PLAT_HPP_2015_06_10__
 
+//////////////////////////////////////////////////////////////////////////
+//	对外接口
+static void init();
+static void uninit();
+static int atom_inc(long* v);
+static int atom_sub(long* v);
+
+//////////////////////////////////////////////////////////////////////////
+//	实现
 #ifdef _WIN32
 
 #include <WinSock2.h>
@@ -35,6 +44,36 @@ struct win32_auto_init
 
 #define bas_init() \
 	static win32_auto_init wai
+
+int atom_inc(long* v)
+{
+	return InterlockedIncrement(v);
+}
+
+int atom_sub(long* v)
+{
+	return InterlockedDecrement(v);
+}
+
+#else	//	Linux
+
+#include <pthread.h>
+
+void init()
+{}
+
+void uninit()
+{}
+
+int atom_inc(long* v)
+{
+	return __sync_fetch_and_add(v, 1);
+}
+
+int atom_sub(long* v)
+{
+	return __sync_fetch_and_add(v, 1);
+}
 
 #endif	//	_WIN32
 #endif	//	__WIN32_PLAT_HPP_2015_06_10__
