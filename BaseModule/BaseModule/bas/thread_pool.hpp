@@ -13,7 +13,6 @@
 //	线程池基于 libevent 实现
 //	这样一方面可以给 io 提供异步服务
 //	另一方面可以给内部逻辑提供异步服务
-//	TODO 注意删除事件时的多线程问题
 namespace bas
 {
 	namespace detail
