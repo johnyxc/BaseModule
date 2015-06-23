@@ -2,11 +2,19 @@
 #define __OSFUNC_HPP_2015_06_23__
 
 //////////////////////////////////////////////////////////////////////////
+//	一些句柄定义
+typedef void* HMUTEX;
+
+//////////////////////////////////////////////////////////////////////////
 //	对外接口
 static void init();
 static void uninit();
 static int atom_inc(long* v);
 static int atom_sub(long* v);
+static HMUTEX get_mutex();
+static void release_mutex(HMUTEX);
+static void lock(HMUTEX);
+static void unlock(HMUTEX);
 
 //////////////////////////////////////////////////////////////////////////
 //	实现
@@ -53,6 +61,26 @@ int atom_inc(long* v)
 int atom_sub(long* v)
 {
 	return InterlockedDecrement(v);
+}
+
+HMUTEX get_mutex()
+{
+	return (HMUTEX)::CreateMutex(0, false, 0);
+}
+
+void release_mutex(HMUTEX mutex)
+{
+	::CloseHandle(mutex);
+}
+
+void lock(HMUTEX mutex)
+{
+	::WaitForSingleObject((HANDLE)mutex, INFINITE);
+}
+
+void unlock(HMUTEX mutex)
+{
+	::ReleaseMutex((HANDLE)mutex);
 }
 
 #else	//	Linux

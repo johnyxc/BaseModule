@@ -1,4 +1,4 @@
-#include <win32_plat.hpp>
+#include <osfunc.hpp>
 #include <activeobject.hpp>
 #include <bio.hpp>
 #include <function.hpp>

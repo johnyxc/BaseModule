@@ -75,12 +75,12 @@ namespace bas
 				}
 			}
 
-// 			void post(strand_t* strand)
-// 			{
-// 				event_base* pbase = pthread_[(cur_idx_++) % count_].pbase_;
-// 				if(!pbase) return;
-// 				event_base_once(pbase, 0, EV_TIMEOUT, i_on_event, (void*)strand, 0);
-// 			}
+			void post(strand_t* strand)
+			{
+				event_base* pbase = pthread_[(cur_idx_++) % count_].pbase_;
+				if(!pbase) return;
+				event_base_once(pbase, 0, EV_TIMEOUT, i_on_event, (void*)strand, 0);
+			}
 
 			void post(const function<void ()>& fo)
 			{
