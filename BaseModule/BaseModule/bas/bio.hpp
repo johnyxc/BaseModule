@@ -1,6 +1,6 @@
 #ifndef __BIO_HPP_2015_06_03__
 #define __BIO_HPP_2015_06_03__
-#include <win32_plat.hpp>
+#include <osfunc.hpp>
 //////////////////////////////////////////////////////////////////////////
 
 namespace bas

@@ -218,6 +218,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\bas\osfunc.hpp"
+				>
+			</File>
+			<File
 				RelativePath=".\bas\placeholder.hpp"
 				>
 			</File>
@@ -239,10 +243,6 @@
 			</File>
 			<File
 				RelativePath=".\bas\thread_pool.hpp"
-				>
-			</File>
-			<File
-				RelativePath=".\bas\win32_plat.hpp"
 				>
 			</File>
 		</Filter>
