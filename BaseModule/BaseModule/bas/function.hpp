@@ -494,25 +494,29 @@ namespace bas
 
 		public :
 			virtual RT operator ()() {
-				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_]);
+				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1) {
 				rl_.p1_ = p1;
-				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_]);
+				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2) {
 				rl_.p1_ = p1;
 				rl_.p2_ = p2;
-				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_]);
+				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2, P3 p3) {
 				rl_.p1_ = p1;
 				rl_.p2_ = p2;
 				rl_.p3_ = p3;
-				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_]);
+				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4) {
@@ -520,7 +524,8 @@ namespace bas
 				rl_.p2_ = p2;
 				rl_.p3_ = p3;
 				rl_.p4_ = p4;
-				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_]);
+				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5) {
@@ -529,7 +534,8 @@ namespace bas
 				rl_.p3_ = p3;
 				rl_.p4_ = p4;
 				rl_.p5_ = p5;
-				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_]);
+				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_]);
 				return RT();
 			}
 			virtual RT operator ()(P1, P2, P3, P4, P5, int) { return RT(); }
@@ -558,27 +564,31 @@ namespace bas
 
 		public :
 			virtual RT operator ()() {
-				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_]);
+				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_]);
 				return RT();
 			}
 
 			virtual RT operator ()(P1 p1) {
 				rl_.p1_ = p1;
-				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_]);
+				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_]);
 				return RT();
 			}
 
 			virtual RT operator ()(P1 p1, P2 p2) {
 				rl_.p1_ = p1;
 				rl_.p2_ = p2;
-				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_]);
+				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2, P3 p3) {
 				rl_.p1_ = p1;
 				rl_.p2_ = p2;
 				rl_.p3_ = p3;
-				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_]);
+				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4) {
@@ -586,7 +596,8 @@ namespace bas
 				rl_.p2_ = p2;
 				rl_.p3_ = p3;
 				rl_.p4_ = p4;
-				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_]);
+				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5) {
@@ -595,7 +606,8 @@ namespace bas
 				rl_.p3_ = p3;
 				rl_.p4_ = p4;
 				rl_.p5_ = p5;
-				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_]);
+				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_]);
 				return RT();
 			}
 			virtual RT operator ()(P1, P2, P3, P4, P5, int) { return RT(); }
@@ -627,25 +639,29 @@ namespace bas
 
 		public :
 			virtual RT operator ()() {
-				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_]);
+				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1) {
 				rl_.p1_ = p1;
-				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_]);
+				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2) {
 				rl_.p1_ = p1;
 				rl_.p2_ = p2;
-				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_]);
+				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2, P3 p3) {
 				rl_.p1_ = p1;
 				rl_.p2_ = p2;
 				rl_.p3_ = p3;
-				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_]);
+				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4) {
@@ -653,7 +669,8 @@ namespace bas
 				rl_.p2_ = p2;
 				rl_.p3_ = p3;
 				rl_.p4_ = p4;
-				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_]);
+				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5) {
@@ -662,7 +679,8 @@ namespace bas
 				rl_.p3_ = p3;
 				rl_.p4_ = p4;
 				rl_.p5_ = p5;
-				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_]);
+				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6) {
@@ -672,7 +690,8 @@ namespace bas
 				rl_.p4_ = p4;
 				rl_.p5_ = p5;
 				rl_.p6_ = p6;
-				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_]);
+				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_]);
 				return RT();
 			}
 			virtual RT operator ()(P1, P2, P3, P4, P5, P6, int) { return RT(); }
@@ -700,27 +719,31 @@ namespace bas
 
 		public :
 			virtual RT operator ()() {
-				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_]);
+				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_]);
 				return RT();
 			}
 
 			virtual RT operator ()(P1 p1) {
 				rl_.p1_ = p1;
-				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_]);
+				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_]);
 				return RT();
 			}
 
 			virtual RT operator ()(P1 p1, P2 p2) {
 				rl_.p1_ = p1;
 				rl_.p2_ = p2;
-				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_]);
+				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2, P3 p3) {
 				rl_.p1_ = p1;
 				rl_.p2_ = p2;
 				rl_.p3_ = p3;
-				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_]);
+				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4) {
@@ -728,7 +751,8 @@ namespace bas
 				rl_.p2_ = p2;
 				rl_.p3_ = p3;
 				rl_.p4_ = p4;
-				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_]);
+				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5) {
@@ -737,7 +761,8 @@ namespace bas
 				rl_.p3_ = p3;
 				rl_.p4_ = p4;
 				rl_.p5_ = p5;
-				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_]);
+				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6) {
@@ -747,7 +772,8 @@ namespace bas
 				rl_.p4_ = p4;
 				rl_.p5_ = p5;
 				rl_.p6_ = p6;
-				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_]);
+				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_]);
 				return RT();
 			}
 			virtual RT operator ()(P1, P2, P3, P4, P5, P6, int) { return RT(); }
@@ -778,25 +804,29 @@ namespace bas
 
 		public :
 			virtual RT operator ()() {
-				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_]);
+				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1) {
 				rl_.p1_ = p1;
-				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_]);
+				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2) {
 				rl_.p1_ = p1;
 				rl_.p2_ = p2;
-				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_]);
+				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2, P3 p3) {
 				rl_.p1_ = p1;
 				rl_.p2_ = p2;
 				rl_.p3_ = p3;
-				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_]);
+				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4) {
@@ -804,7 +834,8 @@ namespace bas
 				rl_.p2_ = p2;
 				rl_.p3_ = p3;
 				rl_.p4_ = p4;
-				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_]);
+				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5) {
@@ -813,7 +844,8 @@ namespace bas
 				rl_.p3_ = p3;
 				rl_.p4_ = p4;
 				rl_.p5_ = p5;
-				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_]);
+				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6) {
@@ -823,7 +855,8 @@ namespace bas
 				rl_.p4_ = p4;
 				rl_.p5_ = p5;
 				rl_.p6_ = p6;
-				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_]);
+				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7) {
@@ -834,7 +867,8 @@ namespace bas
 				rl_.p5_ = p5;
 				rl_.p6_ = p6;
 				rl_.p7_ = p7;
-				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_]);
+				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_]);
 				return RT();
 			}
 			virtual RT operator ()(P1, P2, P3, P4, P5, P6, P7, int) { return RT(); }
@@ -861,27 +895,31 @@ namespace bas
 
 		public :
 			virtual RT operator ()() {
-				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_]);
+				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_]);
 				return RT();
 			}
 
 			virtual RT operator ()(P1 p1) {
 				rl_.p1_ = p1;
-				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_]);
+				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_]);
 				return RT();
 			}
 
 			virtual RT operator ()(P1 p1, P2 p2) {
 				rl_.p1_ = p1;
 				rl_.p2_ = p2;
-				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_]);
+				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2, P3 p3) {
 				rl_.p1_ = p1;
 				rl_.p2_ = p2;
 				rl_.p3_ = p3;
-				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_]);
+				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4) {
@@ -889,7 +927,8 @@ namespace bas
 				rl_.p2_ = p2;
 				rl_.p3_ = p3;
 				rl_.p4_ = p4;
-				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_]);
+				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5) {
@@ -898,7 +937,8 @@ namespace bas
 				rl_.p3_ = p3;
 				rl_.p4_ = p4;
 				rl_.p5_ = p5;
-				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_]);
+				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6) {
@@ -908,7 +948,8 @@ namespace bas
 				rl_.p4_ = p4;
 				rl_.p5_ = p5;
 				rl_.p6_ = p6;
-				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_]);
+				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7) {
@@ -919,7 +960,8 @@ namespace bas
 				rl_.p5_ = p5;
 				rl_.p6_ = p6;
 				rl_.p7_ = p7;
-				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_]);
+				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_]);
 				return RT();
 			}
 			virtual RT operator ()(P1, P2, P3, P4, P5, P6, P7, int) { return RT(); }
@@ -949,25 +991,29 @@ namespace bas
 
 		public :
 			virtual RT operator ()() {
-				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_]);
+				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1) {
 				rl_.p1_ = p1;
-				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_]);
+				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2) {
 				rl_.p1_ = p1;
 				rl_.p2_ = p2;
-				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_]);
+				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2, P3 p3) {
 				rl_.p1_ = p1;
 				rl_.p2_ = p2;
 				rl_.p3_ = p3;
-				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_]);
+				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4) {
@@ -975,7 +1021,8 @@ namespace bas
 				rl_.p2_ = p2;
 				rl_.p3_ = p3;
 				rl_.p4_ = p4;
-				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_]);
+				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5) {
@@ -984,7 +1031,8 @@ namespace bas
 				rl_.p3_ = p3;
 				rl_.p4_ = p4;
 				rl_.p5_ = p5;
-				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_]);
+				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6) {
@@ -994,7 +1042,8 @@ namespace bas
 				rl_.p4_ = p4;
 				rl_.p5_ = p5;
 				rl_.p6_ = p6;
-				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_]);
+				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7) {
@@ -1005,7 +1054,8 @@ namespace bas
 				rl_.p5_ = p5;
 				rl_.p6_ = p6;
 				rl_.p7_ = p7;
-				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_]);
+				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7, P8 p8) {
@@ -1017,7 +1067,8 @@ namespace bas
 				rl_.p6_ = p6;
 				rl_.p7_ = p7;
 				rl_.p8_ = p8;
-				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_]);
+				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_]);
 				return RT();
 			}
 			virtual RT operator ()(P1, P2, P3, P4, P5, P6, P7, P8, int) { return RT(); }
@@ -1043,27 +1094,31 @@ namespace bas
 
 		public :
 			virtual RT operator ()() {
-				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_]);
+				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_]);
 				return RT();
 			}
 
 			virtual RT operator ()(P1 p1) {
 				rl_.p1_ = p1;
-				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_]);
+				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_]);
 				return RT();
 			}
 
 			virtual RT operator ()(P1 p1, P2 p2) {
 				rl_.p1_ = p1;
 				rl_.p2_ = p2;
-				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_]);
+				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2, P3 p3) {
 				rl_.p1_ = p1;
 				rl_.p2_ = p2;
 				rl_.p3_ = p3;
-				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_]);
+				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4) {
@@ -1071,7 +1126,8 @@ namespace bas
 				rl_.p2_ = p2;
 				rl_.p3_ = p3;
 				rl_.p4_ = p4;
-				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_]);
+				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5) {
@@ -1080,7 +1136,8 @@ namespace bas
 				rl_.p3_ = p3;
 				rl_.p4_ = p4;
 				rl_.p5_ = p5;
-				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_]);
+				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6) {
@@ -1090,7 +1147,8 @@ namespace bas
 				rl_.p4_ = p4;
 				rl_.p5_ = p5;
 				rl_.p6_ = p6;
-				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_]);
+				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7) {
@@ -1101,7 +1159,8 @@ namespace bas
 				rl_.p5_ = p5;
 				rl_.p6_ = p6;
 				rl_.p7_ = p7;
-				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_]);
+				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7, P8 p8) {
@@ -1113,7 +1172,8 @@ namespace bas
 				rl_.p6_ = p6;
 				rl_.p7_ = p7;
 				rl_.p8_ = p8;
-				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_]);
+				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_]);
 				return RT();
 			}
 			virtual RT operator ()(P1, P2, P3, P4, P5, P6, P7, P8, int) { return RT(); }
@@ -1142,25 +1202,29 @@ namespace bas
 
 		public :
 			virtual RT operator ()() {
-				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_], rl_[cl_.p9_]);
+				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_], rl_[cl_.p9_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1) {
 				rl_.p1_ = p1;
-				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_], rl_[cl_.p9_]);
+				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_], rl_[cl_.p9_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2) {
 				rl_.p1_ = p1;
 				rl_.p2_ = p2;
-				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_], rl_[cl_.p9_]);
+				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_], rl_[cl_.p9_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2, P3 p3) {
 				rl_.p1_ = p1;
 				rl_.p2_ = p2;
 				rl_.p3_ = p3;
-				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_], rl_[cl_.p9_]);
+				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_], rl_[cl_.p9_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4) {
@@ -1168,7 +1232,8 @@ namespace bas
 				rl_.p2_ = p2;
 				rl_.p3_ = p3;
 				rl_.p4_ = p4;
-				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_], rl_[cl_.p9_]);
+				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_], rl_[cl_.p9_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5) {
@@ -1177,7 +1242,8 @@ namespace bas
 				rl_.p3_ = p3;
 				rl_.p4_ = p4;
 				rl_.p5_ = p5;
-				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_], rl_[cl_.p9_]);
+				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_], rl_[cl_.p9_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6) {
@@ -1187,7 +1253,8 @@ namespace bas
 				rl_.p4_ = p4;
 				rl_.p5_ = p5;
 				rl_.p6_ = p6;
-				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_], rl_[cl_.p9_]);
+				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_], rl_[cl_.p9_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7) {
@@ -1198,7 +1265,8 @@ namespace bas
 				rl_.p5_ = p5;
 				rl_.p6_ = p6;
 				rl_.p7_ = p7;
-				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_], rl_[cl_.p9_]);
+				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_], rl_[cl_.p9_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7, P8 p8) {
@@ -1210,7 +1278,8 @@ namespace bas
 				rl_.p6_ = p6;
 				rl_.p7_ = p7;
 				rl_.p8_ = p8;
-				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_], rl_[cl_.p9_]);
+				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_], rl_[cl_.p9_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7, P8 p8, P9 p9) {
@@ -1223,7 +1292,8 @@ namespace bas
 				rl_.p7_ = p7;
 				rl_.p8_ = p8;
 				rl_.p9_ = p9;
-				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_], rl_[cl_.p9_]);
+				if(fun_) return fun_(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_], rl_[cl_.p9_]);
 				return RT();
 			}
 
@@ -1248,27 +1318,31 @@ namespace bas
 
 		public :
 			virtual RT operator ()() {
-				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_], rl_[cl_.p9_]);
+				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_], rl_[cl_.p9_]);
 				return RT();
 			}
 
 			virtual RT operator ()(P1 p1) {
 				rl_.p1_ = p1;
-				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_], rl_[cl_.p9_]);
+				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_], rl_[cl_.p9_]);
 				return RT();
 			}
 
 			virtual RT operator ()(P1 p1, P2 p2) {
 				rl_.p1_ = p1;
 				rl_.p2_ = p2;
-				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_], rl_[cl_.p9_]);
+				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_], rl_[cl_.p9_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2, P3 p3) {
 				rl_.p1_ = p1;
 				rl_.p2_ = p2;
 				rl_.p3_ = p3;
-				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_], rl_[cl_.p9_]);
+				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_], rl_[cl_.p9_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4) {
@@ -1276,7 +1350,8 @@ namespace bas
 				rl_.p2_ = p2;
 				rl_.p3_ = p3;
 				rl_.p4_ = p4;
-				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_], rl_[cl_.p9_]);
+				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_], rl_[cl_.p9_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5) {
@@ -1285,7 +1360,8 @@ namespace bas
 				rl_.p3_ = p3;
 				rl_.p4_ = p4;
 				rl_.p5_ = p5;
-				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_], rl_[cl_.p9_]);
+				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_], rl_[cl_.p9_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6) {
@@ -1295,7 +1371,8 @@ namespace bas
 				rl_.p4_ = p4;
 				rl_.p5_ = p5;
 				rl_.p6_ = p6;
-				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_], rl_[cl_.p9_]);
+				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_], rl_[cl_.p9_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7) {
@@ -1306,7 +1383,8 @@ namespace bas
 				rl_.p5_ = p5;
 				rl_.p6_ = p6;
 				rl_.p7_ = p7;
-				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_], rl_[cl_.p9_]);
+				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_], rl_[cl_.p9_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7, P8 p8) {
@@ -1318,7 +1396,8 @@ namespace bas
 				rl_.p6_ = p6;
 				rl_.p7_ = p7;
 				rl_.p8_ = p8;
-				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_], rl_[cl_.p9_]);
+				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_], rl_[cl_.p9_]);
 				return RT();
 			}
 			virtual RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7, P8 p8, P9 p9) {
@@ -1331,7 +1410,8 @@ namespace bas
 				rl_.p7_ = p7;
 				rl_.p8_ = p8;
 				rl_.p9_ = p9;
-				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_], rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_], rl_[cl_.p9_]);
+				if(fun_&&self_) return (self_->*fun_)(rl_[cl_.p1_], rl_[cl_.p2_], rl_[cl_.p3_], rl_[cl_.p4_],
+					rl_[cl_.p5_], rl_[cl_.p6_], rl_[cl_.p7_], rl_[cl_.p8_], rl_[cl_.p9_]);
 				return RT();
 			}
 
@@ -1448,7 +1528,8 @@ namespace bas
 			auto_ptr<function_wrapper<RT, P1, P2, P3, P4> > invoker_;
 		};
 
-		template <typename RT, typename P1, typename P2, typename P3, typename P4, typename P5>
+		template <typename RT, typename P1, typename P2, typename P3, typename P4,
+			typename P5>
 		struct function<RT(P1, P2, P3, P4, P5)>
 		{
 		public :
@@ -1461,13 +1542,15 @@ namespace bas
 			function& operator = (const function& fo) { invoker_ = fo.invoker_; return *this; }
 
 		public :
-			RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5) { if(invoker_) return invoker_->operator()(p1, p2, p3, p4, p5); return RT(); }
+			RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5) { if(invoker_) return invoker_->operator()(p1, p2, p3, p4,
+				p5); return RT(); }
 
 		public :
 			auto_ptr<function_wrapper<RT, P1, P2, P3, P4, P5> > invoker_;
 		};
 
-		template <typename RT, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6>
+		template <typename RT, typename P1, typename P2, typename P3, typename P4,
+			typename P5, typename P6>
 		struct function<RT(P1, P2, P3, P4, P5, P6)>
 		{
 		public :
@@ -1480,13 +1563,15 @@ namespace bas
 			function& operator = (const function& fo) { invoker_ = fo.invoker_; return *this; }
 
 		public :
-			RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6) { if(invoker_) return invoker_->operator()(p1, p2, p3, p4, p5, p6); return RT(); }
+			RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6) { if(invoker_) return invoker_->operator()(p1, p2, p3, p4,
+				p5, p6); return RT(); }
 
 		public :
 			auto_ptr<function_wrapper<RT, P1, P2, P3, P4, P5, P6> > invoker_;
 		};
 
-		template <typename RT, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7>
+		template <typename RT, typename P1, typename P2, typename P3, typename P4,
+			typename P5, typename P6, typename P7>
 		struct function<RT(P1, P2, P3, P4, P5, P6, P7)>
 		{
 		public :
@@ -1499,13 +1584,15 @@ namespace bas
 			function& operator = (const function& fo) { invoker_ = fo.invoker_; return *this; }
 
 		public :
-			RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7) { if(invoker_) return invoker_->operator()(p1, p2, p3, p4, p5, p6, p7); return RT(); }
+			RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7) { if(invoker_) return invoker_->operator()(p1, p2, p3, p4,
+				p5, p6, p7); return RT(); }
 
 		public :
 			auto_ptr<function_wrapper<RT, P1, P2, P3, P4, P5, P6, P7> > invoker_;
 		};
 
-		template <typename RT, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7, typename P8>
+		template <typename RT, typename P1, typename P2, typename P3, typename P4,
+			typename P5, typename P6, typename P7, typename P8>
 		struct function<RT(P1, P2, P3, P4, P5, P6, P7, P8)>
 		{
 		public :
@@ -1518,13 +1605,15 @@ namespace bas
 			function& operator = (const function& fo) { invoker_ = fo.invoker_; return *this; }
 
 		public :
-			RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7, P8 p8) { if(invoker_) return invoker_->operator()(p1, p2, p3, p4, p5, p6, p7, p8); return RT(); }
+			RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7, P8 p8) { if(invoker_) return invoker_->operator()(p1, p2, p3, p4,
+				p5, p6, p7, p8); return RT(); }
 
 		public :
 			auto_ptr<function_wrapper<RT, P1, P2, P3, P4, P5, P6, P7, P8> > invoker_;
 		};
 
-		template <typename RT, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7, typename P8, typename P9>
+		template <typename RT, typename P1, typename P2, typename P3, typename P4,
+			typename P5, typename P6, typename P7, typename P8, typename P9>
 		struct function<RT(P1, P2, P3, P4, P5, P6, P7, P8, P9)>
 		{
 		public :
@@ -1537,7 +1626,8 @@ namespace bas
 			function& operator = (const function& fo) { invoker_ = fo.invoker_; return *this; }
 
 		public :
-			RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7, P8 p8, P9 p9) { if(invoker_) return invoker_->operator()(p1, p2, p3, p4, p5, p6, p7, p8, p9); return RT(); }
+			RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7, P8 p8, P9 p9) { if(invoker_) return invoker_->operator()(p1, p2, p3, p4,
+				p5, p6, p7, p8, p9); return RT(); }
 
 		public :
 			auto_ptr<function_wrapper<RT, P1, P2, P3, P4, P5, P6, P7, P8, P9> > invoker_;
