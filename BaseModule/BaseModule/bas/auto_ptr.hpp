@@ -71,6 +71,7 @@ namespace bas
 			}
 			auto_ptr& operator = (const auto_ptr& ap)
 			{
+				if(pwt_) pwt_->release();
 				if(!ap.pwt_) return *this;
 				pwt_ = ap.pwt_;
 				pwt_->retain();
