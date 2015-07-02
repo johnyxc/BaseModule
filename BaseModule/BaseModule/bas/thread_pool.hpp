@@ -22,6 +22,7 @@ namespace bas
 			enum { MAX_THREAD_COUNT = 10 };
 			typedef function<void (evutil_socket_t, short)> STANDARD_FUN;
 
+			//	线程核心结构
 			struct pt_param
 			{
 				pt_param() : pbase_(), pthread_(), alive_(false) {}
@@ -92,7 +93,7 @@ namespace bas
 				event_base_once(pbase, 0, EV_TIMEOUT, i_on_event, (void*)pfo, 0);
 			}
 
-			event* post(evutil_socket_t sock, short type, STANDARD_FUN fo)
+			event* post(evutil_socket_t sock, short type, const STANDARD_FUN& fo)
 			{
 				callback_r* pfo = new callback_r;
 				if((type & 0x10) != 0) pfo->del = false;
@@ -120,7 +121,7 @@ namespace bas
 			void i_on_thread(pt_param* pt)
 			{
 				if(!pt) return;
-				printf("Thread Move On\n");
+				printf("Thread Start Up\n");
 				while(pt->alive_)
 				{
 					event_base_dispatch(pt->pbase_);

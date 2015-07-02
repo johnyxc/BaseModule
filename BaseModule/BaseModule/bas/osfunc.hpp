@@ -15,6 +15,7 @@ static HMUTEX get_mutex();
 static void release_mutex(HMUTEX);
 static void lock(HMUTEX);
 static void unlock(HMUTEX);
+static void bas_sleep(unsigned int ms);
 
 //////////////////////////////////////////////////////////////////////////
 //	й╣ож
@@ -83,14 +84,34 @@ void unlock(HMUTEX mutex)
 	::ReleaseMutex((HANDLE)mutex);
 }
 
+void bas_sleep(unsigned int ms)
+{
+    Sleep(ms);
+}
+
 #else	//	Linux
 
 #include <pthread.h>
+#include <unistd.h>
 
 void init()
 {}
 
 void uninit()
+{}
+
+HMUTEX get_mutex()
+{
+    return 0;
+}
+
+void release_mutex(HMUTEX mutex)
+{}
+
+void lock(HMUTEX mutex)
+{}
+
+void unlock(HMUTEX mutex)
 {}
 
 int atom_inc(long* v)
@@ -101,6 +122,11 @@ int atom_inc(long* v)
 int atom_sub(long* v)
 {
 	return __sync_fetch_and_add(v, 1);
+}
+
+void bas_sleep(unsigned int ms)
+{
+    usleep(ms * 1000);
 }
 
 #endif	//	_WIN32

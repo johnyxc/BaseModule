@@ -202,10 +202,18 @@ namespace bas
 				{	//	¼ÌÐø·¢ËÍ
 					if(cur_wr_evt_) default_thread_pool()->remove(cur_wr_evt_);
 					cur_wr_evt_ = default_thread_pool()->post(sock_, EV_WRITE, bind(&socket_t::i_on_send, bas::retain(this), _1, _2, buf, cb));
+					
 					int bt = ::send(sock_,
 						(buf->buffer_get_buf() + buf->buffer_get_pro_len()),
 						(buf->buffer_get_len() - buf->buffer_get_pro_len()),
 						0);
+					if(bt <= 0)
+					{
+						delete buf;
+						i_err_occur(bt, cur_wr_evt_);
+						return;
+					}
+
 					buf->buffer_set_pro_len(buf->buffer_get_pro_len() + bt);
 				}
 			}
