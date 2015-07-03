@@ -1,9 +1,25 @@
 #ifndef __MEM_POOL_HPP_2015_07_01__
 #define __MEM_POOL_HPP_2015_07_01__
-//	基础模块内存池实现
-//	内存池无法避免内存碎片
-//	需要在分配的时候做最佳匹配，以尽量节省空间
-//	内存池无法处理一次性分配超过10M的请求
+/*
+	基础模块内存池实现
+	内存池无法避免内存碎片
+	需要在分配的时候做最佳匹配，以尽量节省空间
+	内存池无法处理一次性分配超过10M的请求
+
+	内存单元块模型：
+	---------	----
+	| 单元头	|		| 20Bytes
+	---------	----|
+	| 分配域	|		|
+	| 		|		|
+	|		|		| 10M
+	---------		|
+	| 单元头	|		|
+	---------		|
+	| 分配域	|		|
+	|		|		|
+	---------	----
+*/
 #include <bio.hpp>
 #include <vector>
 #include <map>
@@ -22,7 +38,7 @@ namespace bas
 			{
 				int offset;			//	距离块起始位置的偏移
 				int size;			//	本单元块大小
-				char bfree;			//	是否空闲单元块
+				int bfree;			//	是否空闲
 				alloc_unit* prev;	//	上一块单元块位置
 				alloc_unit* next;	//	下一块单元块位置
 			};
@@ -173,7 +189,7 @@ namespace bas
 					block_t* block = block_list_[i];
 					if(block->get_free_count() == 0) continue;
 					buf = block->alloc_buffer(size);
-					buf_block_map_.insert(std::pair<void*, block_t*>(buf, block));
+					if(buf) buf_block_map_.insert(std::pair<void*, block_t*>(buf, block));
 					break;
 				}
 
@@ -195,8 +211,6 @@ namespace bas
 				if(iter == buf_block_map_.end()) return;
 				iter->second->free_buffer(buf);
 			}
-
-		private :
 
 		private :
 			std::vector<block_t*> block_list_;
