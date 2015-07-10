@@ -1444,6 +1444,7 @@ namespace bas
 #undef PROPERTY_TYPE
 			~function() {}
 			function& operator = (const function& fo) { invoker_ = fo.invoker_; return *this; }
+			bool valid() { return invoker_.valid(); }
 
 		public :
 			RT operator ()() { if(invoker_) return invoker_->operator()(); return RT(); }
@@ -1463,6 +1464,7 @@ namespace bas
 #undef PROPERTY_TYPE
 			~function() {}
 			function& operator = (const function& fo) { invoker_ = fo.invoker_; return *this; }
+			bool valid() { return invoker_.valid(); }
 
 		public :
 			RT operator ()(P1 p1) { if(invoker_) return invoker_->operator()(p1); return RT(); }
@@ -1482,6 +1484,7 @@ namespace bas
 #undef PROPERTY_TYPE
 			~function() {}
 			function& operator = (const function& fo) { invoker_ = fo.invoker_; return *this; }
+			bool valid() { return invoker_.valid(); }
 
 		public :
 			RT operator ()(P1 p1, P2 p2) { if(invoker_) return invoker_->operator()(p1, p2); return RT(); }
@@ -1501,6 +1504,7 @@ namespace bas
 #undef PROPERTY_TYPE
 			~function() {}
 			function& operator = (const function& fo) { invoker_ = fo.invoker_; return *this; }
+			bool valid() { return invoker_.valid(); }
 
 		public :
 			RT operator ()(P1 p1, P2 p2, P3 p3) { if(invoker_) return invoker_->operator()(p1, p2, p3); return RT(); }
@@ -1520,6 +1524,7 @@ namespace bas
 #undef PROPERTY_TYPE
 			~function() {}
 			function& operator = (const function& fo) { invoker_ = fo.invoker_; return *this; }
+			bool valid() { return invoker_.valid(); }
 
 		public :
 			RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4) { if(invoker_) return invoker_->operator()(p1, p2, p3, p4); return RT(); }
@@ -1540,6 +1545,7 @@ namespace bas
 #undef PROPERTY_TYPE
 			~function() {}
 			function& operator = (const function& fo) { invoker_ = fo.invoker_; return *this; }
+			bool valid() { return invoker_.valid(); }
 
 		public :
 			RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5) { if(invoker_) return invoker_->operator()(p1, p2, p3, p4,
@@ -1561,6 +1567,7 @@ namespace bas
 #undef PROPERTY_TYPE
 			~function() {}
 			function& operator = (const function& fo) { invoker_ = fo.invoker_; return *this; }
+			bool valid() { return invoker_.valid(); }
 
 		public :
 			RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6) { if(invoker_) return invoker_->operator()(p1, p2, p3, p4,
@@ -1582,6 +1589,7 @@ namespace bas
 #undef PROPERTY_TYPE
 			~function() {}
 			function& operator = (const function& fo) { invoker_ = fo.invoker_; return *this; }
+			bool valid() { return invoker_.valid(); }
 
 		public :
 			RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7) { if(invoker_) return invoker_->operator()(p1, p2, p3, p4,
@@ -1603,6 +1611,7 @@ namespace bas
 #undef PROPERTY_TYPE
 			~function() {}
 			function& operator = (const function& fo) { invoker_ = fo.invoker_; return *this; }
+			bool valid() { return invoker_.valid(); }
 
 		public :
 			RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7, P8 p8) { if(invoker_) return invoker_->operator()(p1, p2, p3, p4,
@@ -1624,6 +1633,7 @@ namespace bas
 #undef PROPERTY_TYPE
 			~function() {}
 			function& operator = (const function& fo) { invoker_ = fo.invoker_; return *this; }
+			bool valid() { return invoker_.valid(); }
 
 		public :
 			RT operator ()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7, P8 p8, P9 p9) { if(invoker_) return invoker_->operator()(p1, p2, p3, p4,

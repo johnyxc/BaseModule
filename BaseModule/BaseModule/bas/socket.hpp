@@ -89,29 +89,40 @@ namespace bas
 				sock_ = sock;
 			}
 
+			void bind_recv_callback(recv_callback cb)
+			{
+				recv_cb_ = cb;
+
+			}
+
+			void bind_send_callback(send_callback cb)
+			{
+				send_cb_ = cb;
+			}
+
 			void bind_error_callback(error_callback cb)
 			{
 				err_cb_ = cb;
 			}
 
 			//	异步接收（指定长度）
-			bool asyn_recv(char* buf, int len, recv_callback cb)
+			bool asyn_recv(char* buf, int len, recv_callback cb = recv_callback())
 			{
 				if(!sock_ || !buf) return false;
-				i_recv(buf, len, cb, false);
+				i_asyn_recv(buf, len, false, cb);
 				return true;
 			}
 
 			//	异步接收（缓冲区有数据立即返回）
-			bool asyn_recv_some(char* buf, int len, recv_callback cb)
+			bool asyn_recv_some(char* buf, int len, recv_callback cb = recv_callback())
 			{
 				if(!sock_ || !buf) return false;
-				i_recv(buf, len, cb, true);
+				i_asyn_recv(buf, len, true, cb);
 				return true;
 			}
 
 			//	异步发送
-			bool asyn_send(char* buf, int len, send_callback cb)
+			bool asyn_send(char* buf, int len, send_callback cb = send_callback())
 			{
 				if(!sock_ || !buf) return false;
 
@@ -125,8 +136,17 @@ namespace bas
 				bf->buffer_set_pro_len(bf->buffer_get_pro_len() + bt);
 
 				//	每次调用都是一次性发送行为
-				if(cur_wr_evt_) default_thread_pool()->remove(cur_wr_evt_);
-				cur_wr_evt_ = default_thread_pool()->post(sock_, EV_WRITE, bind(&socket_t::i_on_send, bas::retain(this), _1, _2, bf, cb));
+				//	指定回调优先使用，建议初始化时设置回调，此处传空
+				if(cb.valid())
+				{
+					if(cur_wr_evt_) default_thread_pool()->remove(cur_wr_evt_);
+					cur_wr_evt_ = default_thread_pool()->get_event(sock_, EV_WRITE, bind(&socket_t::i_on_send, bas::retain(this), _1, _2, bf, cb));
+				}
+				else
+				{
+					if(!cur_wr_evt_) cur_wr_evt_ = default_thread_pool()->get_event(sock_, EV_WRITE, bind(&socket_t::i_on_send, bas::retain(this), _1, _2, bf, send_cb_));
+				}
+				default_thread_pool()->post(cur_wr_evt_);
 
 				return true;
 			}
@@ -137,16 +157,25 @@ namespace bas
 			}
 
 		private :
-			void i_recv(char* buf, int len, recv_callback cb, bool recv_some)
+			void i_asyn_recv(char* buf, int len, bool some, recv_callback cb)
 			{
 				buffer* bf = new buffer;
 				bf->buffer_set_buf(buf);
 				bf->buffer_set_len(len);
-				bf->buffer_set_recv_some(recv_some);
+				bf->buffer_set_recv_some(some);
+
+				if(cb.valid())
+				{
+					if(cur_rd_evt_) default_thread_pool()->remove(cur_rd_evt_);
+					cur_rd_evt_ = default_thread_pool()->get_event(sock_, EV_READ, bind(&socket_t::i_on_recv, bas::retain(this), _1, _2, bf, cb));
+				}
+				else
+				{
+					if(!cur_rd_evt_) default_thread_pool()->get_event(sock_, EV_READ, bind(&socket_t::i_on_recv, bas::retain(this), _1, _2, bf, recv_cb_));
+				}
 
 				//	每次调用都是一次性接收行为
-				if(cur_rd_evt_) default_thread_pool()->remove(cur_rd_evt_);
-				cur_rd_evt_ = default_thread_pool()->post(sock_, EV_READ, bind(&socket_t::i_on_recv, bas::retain(this), _1, _2, bf, cb));
+				default_thread_pool()->post(cur_rd_evt_);
 			}
 
 			void i_on_recv(evutil_socket_t sock, short type, buffer* buf, recv_callback cb)
@@ -166,8 +195,6 @@ namespace bas
 				if(buf->buffer_get_recv_some())
 				{
 					cb(bt, 0);
-					if(cur_rd_evt_) default_thread_pool()->remove(cur_rd_evt_);
-					cur_rd_evt_ = 0;
 					delete buf;
 				}
 				else
@@ -176,14 +203,11 @@ namespace bas
 					if(buf->buffer_get_pro_len() == buf->buffer_get_len())
 					{	//	接收完毕
 						cb(buf->buffer_get_len(), 0);
-						if(cur_rd_evt_) default_thread_pool()->remove(cur_rd_evt_);
-						cur_rd_evt_ = 0;
 						delete buf;
 					}
 					else
 					{	//	需要持续接收
-						if(cur_rd_evt_) default_thread_pool()->remove(cur_rd_evt_);
-						cur_rd_evt_ = default_thread_pool()->post(sock, EV_READ, bind(&socket_t::i_on_recv, bas::retain(this), _1, _2, buf, cb));
+						default_thread_pool()->post(cur_rd_evt_);
 					}
 				}
 			}
@@ -194,15 +218,10 @@ namespace bas
 				if(buf->buffer_get_pro_len() == buf->buffer_get_len())
 				{	//	所有数据发送完毕
 					cb(buf->buffer_get_len(), 0);
-					if(cur_wr_evt_) default_thread_pool()->remove(cur_wr_evt_);
-					cur_wr_evt_ = 0;
 					delete buf;
 				}
 				else
 				{	//	继续发送
-					if(cur_wr_evt_) default_thread_pool()->remove(cur_wr_evt_);
-					cur_wr_evt_ = default_thread_pool()->post(sock_, EV_WRITE, bind(&socket_t::i_on_send, bas::retain(this), _1, _2, buf, cb));
-					
 					int bt = ::send(sock_,
 						(buf->buffer_get_buf() + buf->buffer_get_pro_len()),
 						(buf->buffer_get_len() - buf->buffer_get_pro_len()),
@@ -213,27 +232,15 @@ namespace bas
 						i_err_occur(bt, cur_wr_evt_);
 						return;
 					}
-
 					buf->buffer_set_pro_len(buf->buffer_get_pro_len() + bt);
+
+					default_thread_pool()->post(cur_wr_evt_);
 				}
 			}
 
 			void i_err_occur(int err, event* evt)
 			{
-				if(cur_wr_evt_ == evt)
-				{
-					default_thread_pool()->remove(cur_wr_evt_);
-					cur_wr_evt_ = 0;
-					default_thread_pool()->remove(cur_rd_evt_, true);
-					cur_rd_evt_ = 0;
-				}
-				else if(cur_rd_evt_ == evt)
-				{
-					default_thread_pool()->remove(cur_wr_evt_, true);
-					cur_wr_evt_ = 0;
-					default_thread_pool()->remove(cur_rd_evt_);
-					cur_rd_evt_ = 0;
-				}
+				i_on_clear();
 				err_cb_(err);
 			}
 
@@ -241,13 +248,13 @@ namespace bas
 			{
 				if(cur_wr_evt_)
 				{
-					default_thread_pool()->remove(cur_wr_evt_, true);
+					default_thread_pool()->remove(cur_wr_evt_);
 					cur_wr_evt_ = 0;
 				}
 
 				if(cur_rd_evt_)
 				{
-					default_thread_pool()->remove(cur_rd_evt_, true);
+					default_thread_pool()->remove(cur_rd_evt_);
 					cur_rd_evt_ = 0;
 				}
 
@@ -260,6 +267,8 @@ namespace bas
 
 		private :
 			SOCKET sock_;
+			recv_callback recv_cb_;
+			send_callback send_cb_;
 			error_callback err_cb_;
 			event* cur_wr_evt_;
 			event* cur_rd_evt_;
@@ -438,7 +447,12 @@ namespace bas
 			~acceptor_t() {}
 
 		public :
-			bool asyn_accept(const char* ip, unsigned short port, accept_callback cb)
+			void set_accept_callback(accept_callback cb)
+			{
+				acpt_cb_ = cb;
+			}
+
+			bool asyn_accept(const char* ip, unsigned short port, int backlog = 1024)
 			{
 				sock_ = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 				if(sock_ == INVALID_SOCKET) { return false; }
@@ -456,15 +470,16 @@ namespace bas
 				}
 
 				if(::bind(sock_, (sockaddr*)&addr, sizeof(addr)) != 0) { return false; }
-				if(::listen(sock_, 1024) != 0) { return false; }
+				if(::listen(sock_, backlog) != 0) { return false; }
 
-				evt_ = default_thread_pool()->post(sock_, EV_READ | EV_PERSIST, bind(&acceptor_t::i_on_accept, bas::retain(this), _1, _2, cb));
+				evt_ = default_thread_pool()->get_event(sock_, EV_READ | EV_PERSIST, bind(&acceptor_t::i_on_accept, bas::retain(this), _1, _2, acpt_cb_));
+				default_thread_pool()->post(evt_);
 				return true;
 			}
 
 			void stop()
 			{
-				if(evt_) default_thread_pool()->remove(evt_, true);
+				if(evt_) default_thread_pool()->remove(evt_);
 			}
 
 		private :
@@ -473,7 +488,7 @@ namespace bas
 				sockaddr addr;
 				int len = sizeof(addr);
 				SOCKET client_sock = ::accept(sock, &addr, &len);
-				
+
 				if(client_sock == INVALID_SOCKET) { cb(socket_t(), -1); return; }
 				socket_t so;
 				so.bind_socket(client_sock);
@@ -483,6 +498,7 @@ namespace bas
 		private :
 			SOCKET sock_;
 			event* evt_;
+			accept_callback acpt_cb_;
 		};
 	}
 }

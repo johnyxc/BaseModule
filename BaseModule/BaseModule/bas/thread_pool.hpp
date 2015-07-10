@@ -31,14 +31,6 @@ namespace bas
 				bool alive_;
 			};
 
-			struct callback_r
-			{
-				callback_r() : del(true), fo(new STANDARD_FUN) {}
-				~callback_r() { delete fo; }
-				bool del;
-				STANDARD_FUN* fo;
-			};
-
 		public :
 			thread_pool_t() : count_(2), cur_idx_() {}
 			~thread_pool_t() {}
@@ -62,7 +54,7 @@ namespace bas
 
 			void stop()
 			{
-				std::map<event*, callback_r*>::iterator iter;
+				std::map<event*, STANDARD_FUN*>::iterator iter;
 				for(iter = io_event_list_.begin(); iter != io_event_list_.end(); ++iter)
 				{
 					event_del(iter->first);
@@ -93,27 +85,30 @@ namespace bas
 				event_base_once(pbase, 0, EV_TIMEOUT, i_on_event, (void*)pfo, 0);
 			}
 
-			event* post(evutil_socket_t sock, short type, const STANDARD_FUN& fo)
+			event* get_event(evutil_socket_t sock, short type, const STANDARD_FUN& fo)
 			{
-				callback_r* pfo = new callback_r;
-				if((type & 0x10) != 0) pfo->del = false;
-				(*(pfo->fo)) = fo;
+				STANDARD_FUN* pfo = new STANDARD_FUN;
+				*pfo = fo;
 
 				event_base* pbase = pthread_[(cur_idx_++) % count_].pbase_;
 				event* evt = event_new(pbase, sock, type, i_on_io_event, pfo);
-				io_event_list_.insert(std::pair<event*, callback_r*>(evt, pfo));
+				io_event_list_.insert(std::pair<event*, STANDARD_FUN*>(evt, pfo));
 
-				event_add(evt, 0);
 				return evt;
 			}
 
-			void remove(event* evt, bool del = false)
+			void post(event* evt)
 			{
-				std::map<event*, callback_r*>::iterator iter;
+				event_add(evt, 0);
+			}
+
+			void remove(event* evt)
+			{
+				std::map<event*, STANDARD_FUN*>::iterator iter;
 				iter = io_event_list_.find(evt);
 				if(iter == io_event_list_.end()) return;
 				event_del(iter->first);
-				if(del) delete iter->second;
+				delete iter->second;
 				io_event_list_.erase(iter);
 			}
 
@@ -141,14 +136,13 @@ namespace bas
 			static void i_on_io_event(evutil_socket_t sock, short type, void* arg)
 			{
 				if(!arg) return;
-				callback_r* pfo = (callback_r*)arg;
-				(*(pfo->fo))(sock, type);
-				if(pfo->del) delete pfo;
+				STANDARD_FUN* pfo = (STANDARD_FUN*)arg;
+				(*pfo)(sock, type);
 			}
 
 		private :
 			pt_param pthread_[MAX_THREAD_COUNT];
-			std::map<event*, callback_r*> io_event_list_;
+			std::map<event*, STANDARD_FUN*> io_event_list_;
 			int count_;
 			unsigned int cur_idx_;
 		};

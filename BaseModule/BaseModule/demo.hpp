@@ -33,7 +33,8 @@ public :
 
 	void run()
 	{
-		acpt_.asyn_accept(0, 8899, bind(&main_control_t::i_on_accept, bas::retain(this), _1, _2));
+		acpt_.set_accept_callback(bind(&main_control_t::i_on_accept, bas::retain(this), _1, _2));
+		acpt_.asyn_accept(0, 8899);
 		connector_.asyn_connect(ip_.c_str(), port_, bind(&main_control_t::i_on_accept, bas::retain(this), _1, _2), 10000);
 	}
 

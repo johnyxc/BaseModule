@@ -7,7 +7,7 @@ typedef void* HMUTEX;
 
 //////////////////////////////////////////////////////////////////////////
 //	对外接口
-static void init();
+static void init(int count);
 static void uninit();
 static int atom_inc(long* v);
 static int atom_sub(long* v);
@@ -24,6 +24,7 @@ static void bas_sleep(unsigned int ms);
 #include <WinSock2.h>
 #include <thread_pool.hpp>
 #pragma comment(lib, "ws2_32.lib")
+extern bas::detail::auto_ptr<bas::detail::thread_pool_t> bas::tp;
 
 #ifdef _DEBUG
 #pragma comment(lib, ".\\libevent\\lib\\Debug\\libevent.lib")
@@ -31,13 +32,15 @@ static void bas_sleep(unsigned int ms);
 #pragma comment(lib, ".\\libevent\\lib\\Release\\libevent.lib")
 #endif
 
-void init()
+void init(int count)
 {
 	WSADATA wsaData;
 	WORD sockVersion = MAKEWORD(2, 2);
 	WSAStartup(sockVersion, &wsaData);
 
 	bas::tp = bas::make_auto_ptr<bas::detail::thread_pool_t>();
+	bas::tp->set_thread_count(count);
+	bas::tp->run();
 }
 
 void uninit()
@@ -47,12 +50,12 @@ void uninit()
 
 struct win32_auto_init
 {
-	win32_auto_init() { init(); }
+	win32_auto_init(int count) { init(count); }
 	~win32_auto_init() { uninit(); }
 };
 
-#define bas_init() \
-	static win32_auto_init wai
+#define bas_init(c) \
+	win32_auto_init wai(c); \
 
 int atom_inc(long* v)
 {
@@ -94,7 +97,7 @@ void bas_sleep(unsigned int ms)
 #include <pthread.h>
 #include <unistd.h>
 
-void init()
+void init(int count)
 {}
 
 void uninit()
