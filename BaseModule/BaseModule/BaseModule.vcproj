@@ -222,6 +222,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\bas\memory.hpp"
+				>
+			</File>
+			<File
 				RelativePath=".\bas\osfunc.hpp"
 				>
 			</File>

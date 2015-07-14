@@ -1,5 +1,6 @@
 #ifndef __BIO_HPP_2015_06_03__
 #define __BIO_HPP_2015_06_03__
+#pragma warning(disable : 4996)
 #include <osfunc.hpp>
 //////////////////////////////////////////////////////////////////////////
 

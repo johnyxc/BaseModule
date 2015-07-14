@@ -21,6 +21,8 @@
 	---------	----
 */
 #include <bio.hpp>
+#include <auto_ptr.hpp>
+#include <limits.h>
 #include <vector>
 #include <map>
 
@@ -209,7 +211,7 @@ namespace bas
 
 			void uninit()
 			{
-				for(int i = 0; i < block_list_.size(); i++)
+				for(unsigned int i = 0; i < block_list_.size(); i++)
 				{
 					block_t* block = block_list_[i];
 					if(block) delete block;
@@ -220,7 +222,7 @@ namespace bas
 			{
 				void* buf = 0;
 				
-				for(int i = 0; i < block_list_.size(); i++)
+				for(unsigned int i = 0; i < block_list_.size(); i++)
 				{
 					block_t* block = block_list_[i];
 					if(block->get_free_count() == 0) continue;
@@ -258,6 +260,8 @@ namespace bas
 			std::map<void*, block_t*> buf_block_map_;
 		};
 	}
+
+	detail::auto_ptr<detail::mem_pool_manager_t> mem_pool = make_auto_ptr<detail::mem_pool_manager_t>();
 }
 
 #endif
