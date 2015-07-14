@@ -8,7 +8,7 @@
 
 	内存单元块模型：
 	---------	----
-	| 单元头	|		| 20Bytes
+	| 单元头	|		| 20B
 	---------	----|
 	| 分配域	|		|
 	| 		|		|
@@ -48,32 +48,29 @@ namespace bas
 			~block_t() { i_uninit(); }
 
 		public :
-			//	TODO : 此处最好做最佳匹配，而不是随意分配一个足够大的单元块
 			void* alloc_buffer(int size)
 			{
 				alloc_unit* cur = head_;
 				alloc_unit* prev = cur;
-				//	查找满足条件的一个单元块
-				while(!cur->bfree && cur->size < size)
-				{
-					prev = cur;
-					cur = cur->next;
-				}
 
-				int offset = cur - head_;
-				alloc_unit* next = cur + size + sizeof(alloc_unit);
+				//	由于 manager 已经进行过检测
+				//	此处不会分配失败
+				best_match(cur, prev, size);
+
+				int offset = (char*)cur - (char*)head_;
+				alloc_unit* next = (alloc_unit*)((char*)cur + size + sizeof(alloc_unit));
 
 				if(next == head_ + total_size_)
 				{	//	直接分配完整个内存块
 					i_write_head_info(cur, offset, size, 0, prev, 0);
-					free_count_--;
+					--free_count_;
 				}
 				else
 				{	//	未分配完
 					if(total_size_ - offset <= sizeof(alloc_unit))
 					{	//	剩余空间不足
 						i_write_head_info(cur, offset, size, 0, prev, 0);
-						free_count_--;
+						--free_count_;
 					}
 					else
 					{
@@ -88,17 +85,18 @@ namespace bas
 					}
 				}
 
-				return cur + sizeof(alloc_unit);
+				return (char*)cur + sizeof(alloc_unit);
 			}
 
 			void free_buffer(void* buf)
 			{
 				if(!buf ||
-					buf < head_ + sizeof(alloc_unit) ||
-					buf > head_ + total_size_) return;
+					buf < (char*)head_ + sizeof(alloc_unit) ||
+					buf > (char*)head_ + total_size_) return;
 
 				alloc_unit* cur = (alloc_unit*)((char*)buf - sizeof(alloc_unit));
 				cur->bfree = 1;
+				++free_count_;
 				i_merge_unit(cur);
 			}
 
@@ -129,7 +127,7 @@ namespace bas
 				u->offset = offset;
 				u->size	  = size;
 				u->bfree  = bfree;
-				u->prev   = prev;
+				u->prev   = (u == prev) ? 0 : prev;
 				u->next   = next;
 			}
 
@@ -139,17 +137,17 @@ namespace bas
 				if(cur->prev == 0 && cur->next == 0) return;
 				if(cur->bfree == 0) return;
 
-				if(cur->prev->bfree && cur->next->bfree) {
-					free_count_--;
-				} else if(!cur->prev->bfree && !cur->next->bfree) {
-					free_count_++;
-				}
-
 				while(cur->prev && cur->prev->bfree) cur = cur->prev;
-				while(cur->next && cur->next->bfree)
+				while(cur->next)
 				{
-					cur->size = cur->size + cur->next->size + sizeof(alloc_unit);
+					if(cur->next->bfree) {
+						cur->size = cur->size + cur->next->size + sizeof(alloc_unit);
+						--free_count_;
+					} else {
+						break;
+					}
 					cur->next = cur->next->next;
+					if(cur->next) cur->next->prev = cur;
 				}
 
 				if(cur->next)
@@ -158,11 +156,40 @@ namespace bas
 				}
 			}
 
+			void best_match(alloc_unit*& cur, alloc_unit*& prev, int size)
+			{
+				if(!cur) return;
+
+				//	查找满足条件的一个单元块
+				//	最佳匹配：要求大小和空闲单元块大小尽量一致
+				//	可能存在效率问题
+				int alpha = INT_MAX;
+				alloc_unit* tmp = cur;
+				alloc_unit* bm = 0;
+				while(tmp)
+				{
+					if(tmp->bfree && tmp->size >= size)
+					{
+						int gap = tmp->size - size;
+						if(gap < alpha)
+						{
+							alpha = gap;
+							bm = tmp;
+						}
+						if(alpha == 0) break;
+					}
+					tmp = tmp->next;
+				}
+
+				cur = bm;
+				prev = cur->prev;
+			}
+
 		private :
-			void*	buf_;			//	缓冲区
-			int		total_size_;	//	本块总大小
-			int		free_count_;	//	未使用单元块数量
-			alloc_unit* head_;		//	头
+			void*	buf_;							//	缓冲区
+			int		total_size_;					//	本块总大小
+			int		free_count_;					//	未使用单元块数量
+			alloc_unit* head_;						//	头
 		};
 
 		//////////////////////////////////////////////////////////////////////////
@@ -178,6 +205,15 @@ namespace bas
 			{
 				block_t* block = new block_t;
 				block_list_.push_back(block);
+			}
+
+			void uninit()
+			{
+				for(int i = 0; i < block_list_.size(); i++)
+				{
+					block_t* block = block_list_[i];
+					if(block) delete block;
+				}
 			}
 
 			void* alloc(int size)
@@ -203,13 +239,18 @@ namespace bas
 				return buf;
 			}
 
-			void free(void* buf)
+			bool free(void* buf)
 			{
-				if(!buf) return;
+				if(!buf) return false;
+
 				std::map<void*, block_t*>::const_iterator iter;
 				iter = buf_block_map_.find(buf);
-				if(iter == buf_block_map_.end()) return;
+				if(iter == buf_block_map_.end()) return false;
+
 				iter->second->free_buffer(buf);
+				buf_block_map_.erase(iter);
+
+				return true;
 			}
 
 		private :
