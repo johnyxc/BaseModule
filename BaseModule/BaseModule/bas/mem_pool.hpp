@@ -55,9 +55,9 @@ namespace bas
 				alloc_unit* cur = head_;
 				alloc_unit* prev = cur;
 
-				//	由于 manager 已经进行过检测
-				//	此处不会分配失败
+				//	此处可能分配失败
 				best_match(cur, prev, size);
+				if(!cur) return 0;
 
 				int offset = (char*)cur - (char*)head_;
 				alloc_unit* next = (alloc_unit*)((char*)cur + size + sizeof(alloc_unit));
@@ -183,8 +183,13 @@ namespace bas
 					tmp = tmp->next;
 				}
 
-				cur = bm;
-				prev = cur->prev;
+				if(bm) {
+					cur = bm;
+					prev = cur->prev;
+				} else {
+					cur = 0;
+					prev = 0;
+				}
 			}
 
 		private :
@@ -221,7 +226,7 @@ namespace bas
 			void* alloc(int size)
 			{
 				void* buf = 0;
-				
+
 				for(unsigned int i = 0; i < block_list_.size(); i++)
 				{
 					block_t* block = block_list_[i];
