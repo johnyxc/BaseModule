@@ -3,9 +3,9 @@
 //	封装内存分配、对象创建接口
 #include <stdlib.h>
 #include <string.h>
-#include <new>
 #include <repeat.hpp>
 #include <mem_pool.hpp>
+#include <new>
 
 void* mem_alloc(unsigned int size)
 {
@@ -40,6 +40,13 @@ void* mem_zero(void* ptr, unsigned int size)
 }
 
 //	对象创建
+template <typename T>
+T* mem_create_object()
+{
+	void* p = mem_zalloc(sizeof(T));
+	return new (p)T();
+}
+
 #define mem_create_decl(i) \
 	template <typename T, comma_expand(exp_template_list, i)> \
 	T* mem_create_object(comma_expand(exp_formal_list, i)) \

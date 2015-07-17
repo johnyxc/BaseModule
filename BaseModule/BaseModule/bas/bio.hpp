@@ -24,7 +24,7 @@ namespace bas
 				if(ref_ == 0)
 				{
 					T* obj = static_cast<T*>(this);
-					delete obj;
+					mem_delete_object(obj);
 				}
 			}
 
