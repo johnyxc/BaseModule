@@ -5,7 +5,10 @@
 #include <auto_ptr.hpp>
 #include <thread.hpp>
 #include <thread_pool.hpp>
+#include <mem_pool.hpp>
+#include <WinSock2.h>
 #include <vector>
+#pragma warning(disable : 4996)
 
 //	TODO 注意规范错误码
 namespace bas
@@ -44,21 +47,31 @@ namespace bas
 			{
 			public :
 				buffer() : buf_(), len_(), pro_len_(), recv_some_(), is_ref_(true) {}
-				~buffer() { if(buf_ && !is_ref_) delete buf_; }
+				~buffer() { clear(); }
 
 			public :
 				void buffer_alloc_buf(int len)
 				{
-					if(buf_ && !is_ref_) delete buf_;
-					buf_ = new char[len];
+					if(buf_ && !is_ref_) mem_free(buf_);
+					buf_ = (char*)mem_zalloc(len);
 					is_ref_ = false;
 				}
 
 				void buffer_set_buf(char* bf)
 				{
-					if(buf_ && !is_ref_) delete buf_;
+					if(buf_ && !is_ref_) mem_free(buf_);
 					buf_ = bf;
 					is_ref_ = true;
+				}
+
+				void clear()
+				{
+					if(buf_ && !is_ref_) mem_free(buf_);
+					buf_		= 0;
+					len_		= 0;
+					pro_len_	= 0;
+					recv_some_	= 0;
+					is_ref_		= true;
 				}
 
 				inline void buffer_set_len(int len)			{ len_ = len; }
@@ -80,24 +93,28 @@ namespace bas
 			//////////////////////////////////////////////////////////////////////////
 
 		public :
-			socket_t() : sock_(), cur_rd_evt_(), cur_wr_evt_() {}
+			socket_t() : sock_(), cur_rd_evt_(), cur_wr_evt_(), recv_buf_(), send_buf_() {}
 			~socket_t() {}
 
 		public :
 			void bind_socket(SOCKET sock)
 			{
+				if(sock <= 0) return;
 				sock_ = sock;
 			}
 
 			void bind_recv_callback(recv_callback cb)
 			{
 				recv_cb_ = cb;
-
+				recv_buf_ = mem_create_object<buffer>();
+				cur_rd_evt_ = default_thread_pool()->get_event(sock_, EV_READ, bind(&socket_t::i_on_recv, this, _1, _2));
 			}
 
 			void bind_send_callback(send_callback cb)
 			{
 				send_cb_ = cb;
+				send_buf_ = mem_create_object<buffer>();
+				cur_wr_evt_ = default_thread_pool()->get_event(sock_, EV_WRITE, bind(&socket_t::i_on_send, this, _1, _2));
 			}
 
 			void bind_error_callback(error_callback cb)
@@ -106,48 +123,41 @@ namespace bas
 			}
 
 			//	异步接收（指定长度）
-			bool asyn_recv(char* buf, int len, recv_callback cb = recv_callback())
+			bool asyn_recv(char* buf, int len)
 			{
 				if(!sock_ || !buf) return false;
-				i_asyn_recv(buf, len, false, cb);
+				i_asyn_recv(buf, len, false);
 				return true;
 			}
 
 			//	异步接收（缓冲区有数据立即返回）
-			bool asyn_recv_some(char* buf, int len, recv_callback cb = recv_callback())
+			bool asyn_recv_some(char* buf, int len)
 			{
 				if(!sock_ || !buf) return false;
-				i_asyn_recv(buf, len, true, cb);
+				i_asyn_recv(buf, len, true);
 				return true;
 			}
 
 			//	异步发送
-			bool asyn_send(char* buf, int len, send_callback cb = send_callback())
+			bool asyn_send(char* buf, int len)
 			{
 				if(!sock_ || !buf) return false;
 
-				buffer* bf = new buffer;
-				bf->buffer_alloc_buf(len);
-				memcpy((void*)bf->buffer_get_buf(), (void*)buf, len);
-				bf->buffer_set_len(len);
+				send_buf_->clear();
+				send_buf_->buffer_alloc_buf(len);
+				memcpy((void*)send_buf_->buffer_get_buf(), (void*)buf, len);
+				send_buf_->buffer_set_len(len);
 
-				int bt = ::send(sock_, bf->buffer_get_buf(), bf->buffer_get_len(), 0);
-				if(bt <= 0) { delete bf; return false; }
-				bf->buffer_set_pro_len(bf->buffer_get_pro_len() + bt);
+				int bt = ::send(sock_, send_buf_->buffer_get_buf(), send_buf_->buffer_get_len(), 0);
+				if(bt <= 0)
+				{
+					i_on_clear();
+					return false;
+				}
+				send_buf_->buffer_set_pro_len(send_buf_->buffer_get_pro_len() + bt);
 
 				//	每次调用都是一次性发送行为
-				//	指定回调优先使用，建议初始化时设置回调，此处传空
-				if(cb.valid())
-				{
-					if(cur_wr_evt_) default_thread_pool()->remove(cur_wr_evt_);
-					cur_wr_evt_ = default_thread_pool()->get_event(sock_, EV_WRITE, bind(&socket_t::i_on_send, bas::retain(this), _1, _2, bf, cb));
-				}
-				else
-				{
-					if(!cur_wr_evt_) cur_wr_evt_ = default_thread_pool()->get_event(sock_, EV_WRITE, bind(&socket_t::i_on_send, bas::retain(this), _1, _2, bf, send_cb_));
-				}
 				default_thread_pool()->post(cur_wr_evt_);
-
 				return true;
 			}
 
@@ -157,53 +167,39 @@ namespace bas
 			}
 
 		private :
-			void i_asyn_recv(char* buf, int len, bool some, recv_callback cb)
+			void i_asyn_recv(char* buf, int len, bool some)
 			{
-				buffer* bf = new buffer;
-				bf->buffer_set_buf(buf);
-				bf->buffer_set_len(len);
-				bf->buffer_set_recv_some(some);
-
-				if(cb.valid())
-				{
-					if(cur_rd_evt_) default_thread_pool()->remove(cur_rd_evt_);
-					cur_rd_evt_ = default_thread_pool()->get_event(sock_, EV_READ, bind(&socket_t::i_on_recv, bas::retain(this), _1, _2, bf, cb));
-				}
-				else
-				{
-					if(!cur_rd_evt_) default_thread_pool()->get_event(sock_, EV_READ, bind(&socket_t::i_on_recv, bas::retain(this), _1, _2, bf, recv_cb_));
-				}
+				recv_buf_->clear();
+				recv_buf_->buffer_set_buf(buf);
+				recv_buf_->buffer_set_len(len);
+				recv_buf_->buffer_set_recv_some(some);
 
 				//	每次调用都是一次性接收行为
 				default_thread_pool()->post(cur_rd_evt_);
 			}
 
-			void i_on_recv(evutil_socket_t sock, short type, buffer* buf, recv_callback cb)
+			void i_on_recv(evutil_socket_t sock, short type)
 			{
-				if(!buf) return;
 				int bt = ::recv(sock,
-					(buf->buffer_get_buf() + buf->buffer_get_pro_len()),
-					(buf->buffer_get_len() - buf->buffer_get_pro_len()),
+					(recv_buf_->buffer_get_buf() + recv_buf_->buffer_get_pro_len()),
+					(recv_buf_->buffer_get_len() - recv_buf_->buffer_get_pro_len()),
 					0);
 				if(bt <= 0)
 				{	//	错误事件
-					delete buf;
-					i_err_occur(bt, cur_rd_evt_);
+					i_err_occur(0, 0);
 					return;
 				}
 
-				if(buf->buffer_get_recv_some())
+				if(recv_buf_->buffer_get_recv_some())
 				{
-					cb(bt, 0);
-					delete buf;
+					recv_cb_(bt, 0);
 				}
 				else
 				{
-					buf->buffer_set_pro_len(buf->buffer_get_pro_len() + bt);
-					if(buf->buffer_get_pro_len() == buf->buffer_get_len())
+					recv_buf_->buffer_set_pro_len(recv_buf_->buffer_get_pro_len() + bt);
+					if(recv_buf_->buffer_get_pro_len() == recv_buf_->buffer_get_len())
 					{	//	接收完毕
-						cb(buf->buffer_get_len(), 0);
-						delete buf;
+						recv_cb_(recv_buf_->buffer_get_len(), 0);
 					}
 					else
 					{	//	需要持续接收
@@ -212,28 +208,24 @@ namespace bas
 				}
 			}
 
-			void i_on_send(evutil_socket_t sock, short type, buffer* buf, send_callback cb)
+			void i_on_send(evutil_socket_t sock, short type)
 			{
-				if(!buf) return;
-				if(buf->buffer_get_pro_len() == buf->buffer_get_len())
+				if(send_buf_->buffer_get_pro_len() == send_buf_->buffer_get_len())
 				{	//	所有数据发送完毕
-					cb(buf->buffer_get_len(), 0);
-					delete buf;
+					send_cb_(send_buf_->buffer_get_len(), 0);
 				}
 				else
 				{	//	继续发送
 					int bt = ::send(sock_,
-						(buf->buffer_get_buf() + buf->buffer_get_pro_len()),
-						(buf->buffer_get_len() - buf->buffer_get_pro_len()),
+						(send_buf_->buffer_get_buf() + send_buf_->buffer_get_pro_len()),
+						(send_buf_->buffer_get_len() - send_buf_->buffer_get_pro_len()),
 						0);
 					if(bt <= 0)
 					{
-						delete buf;
-						i_err_occur(bt, cur_wr_evt_);
+						i_err_occur(0, 0);
 						return;
 					}
-					buf->buffer_set_pro_len(buf->buffer_get_pro_len() + bt);
-
+					send_buf_->buffer_set_pro_len(send_buf_->buffer_get_pro_len() + bt);
 					default_thread_pool()->post(cur_wr_evt_);
 				}
 			}
@@ -258,20 +250,35 @@ namespace bas
 					cur_rd_evt_ = 0;
 				}
 
+				if(recv_buf_)
+				{
+					mem_delete_object<buffer>(recv_buf_);
+					recv_buf_ = 0;
+				}
+
+				if(send_buf_)
+				{
+					mem_delete_object<buffer>(send_buf_);
+					send_buf_ = 0;
+				}
+
 				if(sock_)
 				{
+					::shutdown(sock_, SD_BOTH);
 					::closesocket(sock_);
 					sock_ = 0;
 				}
 			}
 
 		private :
-			SOCKET sock_;
-			recv_callback recv_cb_;
-			send_callback send_cb_;
-			error_callback err_cb_;
-			event* cur_wr_evt_;
-			event* cur_rd_evt_;
+			SOCKET			sock_;
+			recv_callback	recv_cb_;
+			send_callback	send_cb_;
+			error_callback	err_cb_;
+			event*			cur_wr_evt_;
+			event*			cur_rd_evt_;
+			buffer*			recv_buf_;
+			buffer*			send_buf_;
 		};
 
 		//	域名解析对象
@@ -292,7 +299,7 @@ namespace bas
 		public :
 			bool asyn_resolve(const char* url, resolve_callback cb)
 			{
-				resolve_info* ri = new resolve_info;
+				resolve_info* ri = mem_create_object<resolve_info>();
 				strncpy(ri->url, url, strlen(url));
 				ri->cb	= cb;
 				::CreateThread(0, 0, i_on_resolve, (LPVOID)ri, 0, 0);
@@ -320,7 +327,7 @@ namespace bas
 					}
 					ri->cb(addr_list, 0);
 				}
-				delete ri;
+				mem_delete_object(ri);
 				return 0;
 			}
 		};
@@ -382,7 +389,7 @@ namespace bas
 
 				::connect(sock, (SOCKADDR*)&addr, sizeof(addr));
 
-				connect_info* ci = new connect_info;
+				connect_info* ci = mem_create_object<connect_info>();
 				ci->sock = sock;
 				ci->cb	 = cb;
 				ci->timeout = timeout;
@@ -400,7 +407,7 @@ namespace bas
 			static DWORD WINAPI i_on_connect(LPVOID param)
 			{
 				connect_info* ci = (connect_info*)param;
-				if(ci->sock == -1) { delete ci; return 0; }
+				if(ci->sock == -1) { mem_delete_object(ci); return 0; }
 
 				timeval tv = {};
 				tv.tv_usec = 1;
@@ -429,7 +436,7 @@ namespace bas
 					ci->cb(socket_t(), -1);
 				}
 
-				delete ci;
+				mem_delete_object(ci);
 				return 0;
 			}
 

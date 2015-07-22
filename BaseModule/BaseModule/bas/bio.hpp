@@ -1,6 +1,5 @@
 #ifndef __BIO_HPP_2015_06_03__
 #define __BIO_HPP_2015_06_03__
-#pragma warning(disable : 4996)
 #include <osfunc.hpp>
 //////////////////////////////////////////////////////////////////////////
 
@@ -17,14 +16,14 @@ namespace bas
 
 		public :
 			void retain() { atom_inc(&ref_); }
-
 			void release()
 			{
 				atom_sub(&ref_);
 				if(ref_ == 0)
 				{
 					T* obj = static_cast<T*>(this);
-					mem_delete_object(obj);
+					obj->~T();
+					free(obj);
 				}
 			}
 

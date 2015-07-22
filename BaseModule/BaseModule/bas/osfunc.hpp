@@ -6,56 +6,10 @@
 typedef void* HMUTEX;
 
 //////////////////////////////////////////////////////////////////////////
-//	对外接口
-static void init(int count);
-static void uninit();
-static int atom_inc(long* v);
-static int atom_sub(long* v);
-static HMUTEX get_mutex();
-static void release_mutex(HMUTEX);
-static void lock(HMUTEX);
-static void unlock(HMUTEX);
-static void bas_sleep(unsigned int ms);
-
-//////////////////////////////////////////////////////////////////////////
 //	实现
 #ifdef _WIN32
-
-#include <WinSock2.h>
-#include <thread_pool.hpp>
-#pragma comment(lib, "ws2_32.lib")
-extern bas::detail::auto_ptr<bas::detail::thread_pool_t> bas::tp;
-
-#ifdef _DEBUG
-#pragma comment(lib, ".\\libevent\\lib\\Debug\\libevent.lib")
-#else
-#pragma comment(lib, ".\\libevent\\lib\\Release\\libevent.lib")
-#endif
-
-void init(int count)
-{
-	WSADATA wsaData;
-	WORD sockVersion = MAKEWORD(2, 2);
-	WSAStartup(sockVersion, &wsaData);
-
-	bas::tp = bas::make_auto_ptr<bas::detail::thread_pool_t>();
-	bas::tp->set_thread_count(count);
-	bas::tp->run();
-}
-
-void uninit()
-{
-	WSACleanup();
-}
-
-struct win32_auto_init
-{
-	win32_auto_init(int count) { init(count); }
-	~win32_auto_init() { uninit(); }
-};
-
-#define bas_init(c) \
-	win32_auto_init wai(c); \
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 
 int atom_inc(long* v)
 {
@@ -69,22 +23,31 @@ int atom_sub(long* v)
 
 HMUTEX get_mutex()
 {
-	return (HMUTEX)::CreateMutex(0, false, 0);
+	CRITICAL_SECTION* cs = new CRITICAL_SECTION;
+	::InitializeCriticalSection(cs);
+	return (HMUTEX)cs;
 }
 
 void release_mutex(HMUTEX mutex)
 {
-	::CloseHandle(mutex);
+	CRITICAL_SECTION* cs = (CRITICAL_SECTION*)mutex;
+	::DeleteCriticalSection(cs);
+	delete cs;
 }
 
 void lock(HMUTEX mutex)
 {
-	::WaitForSingleObject((HANDLE)mutex, INFINITE);
+	::EnterCriticalSection((CRITICAL_SECTION*)mutex);
+}
+
+bool try_lock(HMUTEX mutex)
+{
+	return ::TryEnterCriticalSection((CRITICAL_SECTION*)mutex);
 }
 
 void unlock(HMUTEX mutex)
 {
-	::ReleaseMutex((HANDLE)mutex);
+	::LeaveCriticalSection((CRITICAL_SECTION*)mutex);
 }
 
 void bas_sleep(unsigned int ms)
@@ -96,12 +59,6 @@ void bas_sleep(unsigned int ms)
 
 #include <pthread.h>
 #include <unistd.h>
-
-void init(int count)
-{}
-
-void uninit()
-{}
 
 HMUTEX get_mutex()
 {

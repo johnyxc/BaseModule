@@ -23,6 +23,7 @@ namespace bas
 			P1_1, P2_2, P3_3, P4_4,
 			P5_5, P6_6, P7_7, P8_8, P9_9> >
 		{
+			function_wrapper() {}
 			virtual ~function_wrapper() {}
 			virtual RT operator ()() { return RT(); }
 			blank_expand(VFUN_EXPAND, 9)

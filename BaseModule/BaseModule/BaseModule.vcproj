@@ -218,6 +218,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\bas\init.hpp"
+				>
+			</File>
+			<File
 				RelativePath=".\bas\mem_pool.hpp"
 				>
 			</File>

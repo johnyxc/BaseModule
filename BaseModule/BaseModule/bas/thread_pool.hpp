@@ -6,8 +6,10 @@
 #include <function.hpp>
 #include <bind.hpp>
 #include <auto_ptr.hpp>
+#include <osfunc.hpp>
+#include <memory.hpp>
 #include <strand.hpp>
-#include <map>
+#include <vector>
 #include <algorithm>
 
 //	线程池基于 libevent 实现
@@ -32,8 +34,8 @@ namespace bas
 			};
 
 		public :
-			thread_pool_t() : count_(2), cur_idx_() {}
-			~thread_pool_t() {}
+			thread_pool_t() : count_(2), cur_idx_(), mutex_() { mutex_ = get_mutex(); }
+			~thread_pool_t() { if(mutex_) release_mutex(mutex_); }
 
 		public :
 			void set_thread_count(int count = 2)
@@ -54,13 +56,6 @@ namespace bas
 
 			void stop()
 			{
-				std::map<event*, STANDARD_FUN*>::iterator iter;
-				for(iter = io_event_list_.begin(); iter != io_event_list_.end(); ++iter)
-				{
-					event_del(iter->first);
-					delete iter->second;
-				}
-
 				for(int i = 0; i < count_; i++)
 				{
 					pthread_[i].alive_ = false;
@@ -68,48 +63,52 @@ namespace bas
 				}
 			}
 
+			//	暂不支持
 			void post(strand_t* strand)
 			{
-				event_base* pbase = pthread_[(cur_idx_++) % count_].pbase_;
+				event_base* pbase = pthread_[(atom_inc(&cur_idx_)) % count_].pbase_;
 				if(!pbase) return;
 				event_base_once(pbase, 0, EV_TIMEOUT, i_on_event, (void*)strand, 0);
 			}
 
 			void post(const function<void ()>& fo)
 			{
-				function<void ()>* pfo = new function<void ()>;
+				function<void ()>* pfo = mem_create_object<function<void ()> >();
 				*pfo = fo;
 
-				event_base* pbase = pthread_[(cur_idx_++) % count_].pbase_;
+				event_base* pbase = pthread_[(atom_inc(&cur_idx_)) % count_].pbase_;
 				if(!pbase) return;
 				event_base_once(pbase, 0, EV_TIMEOUT, i_on_event, (void*)pfo, 0);
 			}
 
 			event* get_event(evutil_socket_t sock, short type, const STANDARD_FUN& fo)
 			{
-				STANDARD_FUN* pfo = new STANDARD_FUN;
+				STANDARD_FUN* pfo = mem_create_object<STANDARD_FUN>();
 				*pfo = fo;
 
-				event_base* pbase = pthread_[(cur_idx_++) % count_].pbase_;
+				event_base* pbase = pthread_[(atom_inc(&cur_idx_)) % count_].pbase_;
+				lock(mutex_);
 				event* evt = event_new(pbase, sock, type, i_on_io_event, pfo);
-				io_event_list_.insert(std::pair<event*, STANDARD_FUN*>(evt, pfo));
+				unlock(mutex_);
 
 				return evt;
 			}
 
 			void post(event* evt)
 			{
+				lock(mutex_);
 				event_add(evt, 0);
+				unlock(mutex_);
 			}
 
 			void remove(event* evt)
 			{
-				std::map<event*, STANDARD_FUN*>::iterator iter;
-				iter = io_event_list_.find(evt);
-				if(iter == io_event_list_.end()) return;
-				event_del(iter->first);
-				delete iter->second;
-				io_event_list_.erase(iter);
+				lock(mutex_);
+				STANDARD_FUN* pfo = (STANDARD_FUN*)event_get_callback_arg(evt);
+				if(pfo) mem_delete_object(pfo);
+				event_del(evt);
+				event_free(evt);
+				unlock(mutex_);
 			}
 
 		private :
@@ -130,7 +129,7 @@ namespace bas
 				if(!arg) return;
 				function<void ()>* pfo = (function<void ()>*)arg;
 				(*pfo)();
-				delete pfo;
+				mem_delete_object(pfo);
 			}
 
 			static void i_on_io_event(evutil_socket_t sock, short type, void* arg)
@@ -140,11 +139,11 @@ namespace bas
 				(*pfo)(sock, type);
 			}
 
-		private :
-			pt_param pthread_[MAX_THREAD_COUNT];
-			std::map<event*, STANDARD_FUN*> io_event_list_;
-			int count_;
-			unsigned int cur_idx_;
+		public :
+			pt_param	pthread_[MAX_THREAD_COUNT];
+			int			count_;
+			long		cur_idx_;
+			HMUTEX		mutex_;
 		};
 	}
 

@@ -43,16 +43,16 @@ void* mem_zero(void* ptr, unsigned int size)
 template <typename T>
 T* mem_create_object()
 {
-	void* p = mem_zalloc(sizeof(T));
-	return new (p)T();
+	void* buf = malloc(sizeof(T));
+	return new (buf)T();
 }
 
 #define mem_create_decl(i) \
 	template <typename T, comma_expand(exp_template_list, i)> \
 	T* mem_create_object(comma_expand(exp_formal_list, i)) \
 { \
-	void* p = mem_zalloc(sizeof(T)); \
-	return new (p)T(comma_expand(exp_actual_list, i)); \
+	void* buf = malloc(sizeof(T)); \
+	return new (buf)T(comma_expand(exp_actual_list, i)); \
 }
 
 blank_expand(mem_create_decl, 9);
@@ -62,7 +62,7 @@ template <typename T>
 void mem_delete_object(T* o)
 {
 	o->~T();
-	mem_free(o);
+	free(o);
 }
 
 #endif

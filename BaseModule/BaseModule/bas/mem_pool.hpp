@@ -1,5 +1,6 @@
 #ifndef __MEM_POOL_HPP_2015_07_01__
 #define __MEM_POOL_HPP_2015_07_01__
+#pragma warning(disable : 4996)
 /*
 	*基础模块内存池实现
 	*内存池无法避免内存碎片
@@ -22,6 +23,7 @@
 */
 #include <bio.hpp>
 #include <auto_ptr.hpp>
+#include <osfunc.hpp>
 #include <limits.h>
 #include <vector>
 #include <map>
@@ -60,31 +62,24 @@ namespace bas
 				if(!cur) return 0;
 
 				int offset = (char*)cur - (char*)head_;
+				int cur_len = cur->size;
 				alloc_unit* next = (alloc_unit*)((char*)cur + size + sizeof(alloc_unit));
 
-				if(next == head_ + total_size_)
-				{	//	直接分配完整个内存块
-					i_write_head_info(cur, offset, size, 0, prev, 0);
+				if(cur_len <= size + sizeof(alloc_unit))
+				{	//	剩余全部分配给此块
+					i_write_head_info(cur, offset, cur->size, 0, prev, cur->next);
 					--free_count_;
 				}
 				else
-				{	//	未分配完
-					if(total_size_ - offset <= sizeof(alloc_unit))
-					{	//	剩余空间不足
-						i_write_head_info(cur, offset, size, 0, prev, 0);
-						--free_count_;
-					}
-					else
-					{
-						int next_size = cur->size - size - sizeof(alloc_unit);
-						alloc_unit* temp_next = cur->next;
+				{
+					alloc_unit* temp_next = cur->next;
+					int next_size = cur->size - size - sizeof(alloc_unit);
 
-						//	更新本块信息
-						i_write_head_info(cur, offset, size, 0, prev, next);
+					//	更新本块信息
+					i_write_head_info(cur, offset, size, 0, prev, next);
 
-						//	更新下一块信息
-						i_write_head_info(next, next - head_, next_size, 1, cur, temp_next);
-					}
+					//	更新下一块信息
+					i_write_head_info(next, (char*)next - (char*)head_, next_size, 1, cur, temp_next);
 				}
 
 				return (char*)cur + sizeof(alloc_unit);
@@ -163,7 +158,7 @@ namespace bas
 				if(!cur) return;
 
 				//	查找满足条件的一个单元块
-				//	最佳匹配：要求大小和空闲单元块大小尽量一致
+				//	这里用到的最佳匹配策略：要求大小和空闲单元块大小尽量一致
 				//	可能存在效率问题
 				int alpha = INT_MAX;
 				alloc_unit* tmp = cur;
@@ -193,10 +188,10 @@ namespace bas
 			}
 
 		private :
-			void*	buf_;							//	缓冲区
-			int		total_size_;					//	本块总大小
-			int		free_count_;					//	未使用单元块数量
-			alloc_unit* head_;						//	头
+			void*	buf_;			//	缓冲区
+			int		total_size_;	//	本块总大小
+			int		free_count_;	//	未使用单元块数量
+			alloc_unit* head_;		//	头
 		};
 
 		//////////////////////////////////////////////////////////////////////////
@@ -204,8 +199,8 @@ namespace bas
 		struct mem_pool_manager_t : bio_bas_t<mem_pool_manager_t>
 		{
 		public :
-			mem_pool_manager_t() {}
-			~mem_pool_manager_t() {}
+			mem_pool_manager_t() : mutex_() { mutex_ = get_mutex(); }
+			~mem_pool_manager_t() { if(mutex_) release_mutex(mutex_); }
 
 		public :
 			void init(int count = 1)
@@ -226,22 +221,26 @@ namespace bas
 			void* alloc(int size)
 			{
 				void* buf = 0;
+				block_t* block = 0;
 
+				lock(mutex_);
 				for(unsigned int i = 0; i < block_list_.size(); i++)
 				{
-					block_t* block = block_list_[i];
+					block = block_list_[i];
 					if(block->get_free_count() == 0) continue;
 					buf = block->alloc_buffer(size);
-					if(buf) buf_block_map_.insert(std::pair<void*, block_t*>(buf, block));
 					break;
 				}
 
 				if(buf == 0)
 				{
-					block_t* block = new block_t;
+					block = new block_t;
 					block_list_.push_back(block);
 					buf = block->alloc_buffer(size);
 				}
+
+				if(buf) buf_block_map_.insert(std::pair<void*, block_t*>(buf, block));
+				unlock(mutex_);
 
 				return buf;
 			}
@@ -250,12 +249,14 @@ namespace bas
 			{
 				if(!buf) return false;
 
+				lock(mutex_);
 				std::map<void*, block_t*>::const_iterator iter;
 				iter = buf_block_map_.find(buf);
-				if(iter == buf_block_map_.end()) return false;
+				if(iter == buf_block_map_.end()) { unlock(mutex_); return false; }
 
 				iter->second->free_buffer(buf);
 				buf_block_map_.erase(iter);
+				unlock(mutex_);
 
 				return true;
 			}
@@ -263,6 +264,7 @@ namespace bas
 		private :
 			std::vector<block_t*> block_list_;
 			std::map<void*, block_t*> buf_block_map_;
+			HMUTEX mutex_;
 		};
 	}
 
