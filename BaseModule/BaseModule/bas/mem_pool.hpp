@@ -22,7 +22,6 @@
 	---------	----
 */
 #include <bio.hpp>
-#include <auto_ptr.hpp>
 #include <osfunc.hpp>
 #include <limits.h>
 #include <vector>
@@ -114,7 +113,7 @@ namespace bas
 
 			void i_uninit()
 			{
-				if(buf_) delete buf_;
+				if(buf_) delete [] buf_;
 			}
 
 			void i_write_head_info(void* p, int offset, int size, char bfree, alloc_unit* prev, alloc_unit* next)
@@ -250,7 +249,7 @@ namespace bas
 				if(!buf) return false;
 
 				lock(mutex_);
-				std::map<void*, block_t*>::const_iterator iter;
+				std::map<void*, block_t*>::iterator iter;
 				iter = buf_block_map_.find(buf);
 				if(iter == buf_block_map_.end()) { unlock(mutex_); return false; }
 
@@ -268,7 +267,7 @@ namespace bas
 		};
 	}
 
-	detail::auto_ptr<detail::mem_pool_manager_t> mem_pool = make_auto_ptr<detail::mem_pool_manager_t>();
+	detail::mem_pool_manager_t* mem_pool = new detail::mem_pool_manager_t();
 }
 
 #endif

@@ -1,6 +1,7 @@
 #ifndef __BIO_HPP_2015_06_03__
 #define __BIO_HPP_2015_06_03__
 #include <osfunc.hpp>
+#include <stdlib.h>
 //////////////////////////////////////////////////////////////////////////
 
 namespace bas

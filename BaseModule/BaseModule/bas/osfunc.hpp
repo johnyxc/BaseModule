@@ -62,17 +62,30 @@ void bas_sleep(unsigned int ms)
 
 HMUTEX get_mutex()
 {
-    return 0;
+    pthread_mutex_t* mutex = new pthread_mutex_t;
+	pthread_mutex_init(mutex, 0);
+	return (HMUTEX)mutex;
 }
 
 void release_mutex(HMUTEX mutex)
-{}
+{
+	pthread_mutex_destroy((pthread_mutex_t*)mutex);
+}
 
 void lock(HMUTEX mutex)
-{}
+{
+	pthread_mutex_lock((pthread_mutex_t*)mutex);
+}
+
+bool try_lock(HMUTEX mutex)
+{
+	return (pthread_mutex_trylock((pthread_mutex_t*)mutex) == 0);
+}
 
 void unlock(HMUTEX mutex)
-{}
+{
+	pthread_mutex_unlock((pthread_mutex_t*)mutex);
+}
 
 int atom_inc(long* v)
 {

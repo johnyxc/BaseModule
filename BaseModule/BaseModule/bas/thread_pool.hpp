@@ -27,7 +27,7 @@ namespace bas
 			//	线程核心结构
 			struct pt_param
 			{
-				pt_param() : pbase_(), pthread_(), alive_(false) {}
+				pt_param() : pthread_(), pbase_(), alive_(false) {}
 				auto_ptr<thread_t> pthread_;
 				event_base* pbase_;
 				bool alive_;
@@ -119,7 +119,7 @@ namespace bas
 				while(pt->alive_)
 				{
 					event_base_dispatch(pt->pbase_);
-					Sleep(1);
+					bas_sleep(1);
 				}
 				printf("Thread Exit\n");
 			}
@@ -147,8 +147,8 @@ namespace bas
 		};
 	}
 
-	detail::auto_ptr<detail::thread_pool_t> tp;
-	detail::thread_pool_t* default_thread_pool() { return tp.raw_ptr(); }
+	detail::thread_pool_t* tp;
+	detail::thread_pool_t* default_thread_pool() { return tp; }
 }
 
 #endif

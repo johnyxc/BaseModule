@@ -214,6 +214,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\bas\error_def.hpp"
+				>
+			</File>
+			<File
 				RelativePath=".\bas\function.hpp"
 				>
 			</File>

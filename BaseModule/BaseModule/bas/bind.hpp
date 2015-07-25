@@ -7,6 +7,7 @@
 #include <function.hpp>
 #include <repeat.hpp>
 #include <auto_ptr.hpp>
+#include <memory.hpp>
 
 namespace bas
 {
@@ -19,7 +20,7 @@ namespace bas
 			bind(RT(*fun)())
 		{
 			function<RT()> fo;
-			auto_ptr<function_cstyle_wrapper<RT> > wp = new function_cstyle_wrapper<RT>;
+			auto_ptr<function_cstyle_wrapper<RT> > wp = mem_create_object<function_cstyle_wrapper<RT> >();
 			wp->fun_ = fun;
 			fo.invoker_ = auto_ptr<function_wrapper<RT> >::auto_ptr_dynamic_cast(wp);
 			return fo;
@@ -31,7 +32,7 @@ namespace bas
 			bind(RT(CT::*fun)(), CT* self)
 		{
 			function<RT()> fo;
-			auto_ptr<function_mem_wrapper<CT, RT> > wp = new function_mem_wrapper<CT, RT>;
+			auto_ptr<function_mem_wrapper<CT, RT> > wp = mem_create_object<function_mem_wrapper<CT, RT> >();
 			wp->fun_ = fun;
 			wp->self_ = self;
 			fo.invoker_ = auto_ptr<function_wrapper<RT> >::auto_ptr_dynamic_cast(wp);
@@ -44,7 +45,7 @@ namespace bas
 			bind(RT(CT::*fun)(), auto_ptr<CT> self)
 		{
 			function<RT()> fo;
-			auto_ptr<function_mem_wrapper<CT, RT> > wp = new function_mem_wrapper<CT, RT>;
+			auto_ptr<function_mem_wrapper<CT, RT> > wp = mem_create_object<function_mem_wrapper<CT, RT> >();
 			wp->fun_ = fun;
 			wp->self_ = self.raw_ptr();
 			wp->auto_self_ = self;
@@ -62,7 +63,7 @@ namespace bas
 			function<RT(comma_expand(exp_type_list, 1))> fo;
 			CallList1<comma_expand(exp_type_list_ph, 1)> cl(comma_expand(exp_actual_list_ph, 1));
 			auto_ptr<function_cstyle_wrapper_1<RT, comma_expand(exp_type_list, 1), comma_expand(exp_type_list_ph, 1)> > wp =
-				new function_cstyle_wrapper_1<RT, comma_expand(exp_type_list, 1), comma_expand(exp_type_list_ph, 1)>(cl);
+				mem_create_object<function_cstyle_wrapper_1<RT, comma_expand(exp_type_list, 1), comma_expand(exp_type_list_ph, 1)> >(cl);
 			wp->fun_	= fun;
 			wp->cl_		= cl;
 			fo.invoker_ = auto_ptr<function_wrapper<RT, comma_expand(exp_type_list, 1)> >::auto_ptr_dynamic_cast(wp);
@@ -78,7 +79,7 @@ namespace bas
 			function<RT(comma_expand(exp_type_list, 1))> fo;
 			CallList1<comma_expand(exp_type_list_ph, 1)> cl(comma_expand(exp_actual_list_ph, 1));
 			auto_ptr<function_mem_wrapper_1<CT, RT, comma_expand(exp_type_list, 1), comma_expand(exp_type_list_ph, 1)> > wp =
-				new function_mem_wrapper_1<CT, RT, comma_expand(exp_type_list, 1), comma_expand(exp_type_list_ph, 1)>(cl);
+				mem_create_object<function_mem_wrapper_1<CT, RT, comma_expand(exp_type_list, 1), comma_expand(exp_type_list_ph, 1)> >(cl);
 			wp->fun_	= fun;
 			wp->self_	= self;
 			wp->cl_		= cl;
@@ -95,7 +96,7 @@ namespace bas
 			function<RT(comma_expand(exp_type_list, 1))> fo;
 			CallList1<comma_expand(exp_type_list_ph, 1)> cl(comma_expand(exp_actual_list_ph, 1));
 			auto_ptr<function_mem_wrapper_1<CT, RT, comma_expand(exp_type_list, 1), comma_expand(exp_type_list_ph, 1)> > wp =
-				new function_mem_wrapper_1<CT, RT, comma_expand(exp_type_list, 1), comma_expand(exp_type_list_ph, 1)>(cl);
+				mem_create_object<function_mem_wrapper_1<CT, RT, comma_expand(exp_type_list, 1), comma_expand(exp_type_list_ph, 1)> >(cl);
 			wp->fun_	= fun;
 			wp->self_	= self.raw_ptr();
 			wp->auto_self_ = self;
@@ -114,7 +115,7 @@ namespace bas
 			function<RT(comma_expand(exp_type_list, 2))> fo;
 			CallList2<comma_expand(exp_type_list_ph, 2)> cl(comma_expand(exp_actual_list_ph, 2));
 			auto_ptr<function_cstyle_wrapper_2<RT, comma_expand(exp_type_list, 2), comma_expand(exp_type_list_ph, 2)> > wp =
-				new function_cstyle_wrapper_2<RT, comma_expand(exp_type_list, 2), comma_expand(exp_type_list_ph, 2)>(cl);
+				mem_create_object<function_cstyle_wrapper_2<RT, comma_expand(exp_type_list, 2), comma_expand(exp_type_list_ph, 2)> >(cl);
 			wp->fun_	= fun;
 			wp->cl_		= cl;
 			fo.invoker_ = auto_ptr<function_wrapper<RT, comma_expand(exp_type_list, 2)> >::auto_ptr_dynamic_cast(wp);
@@ -130,7 +131,7 @@ namespace bas
 			function<RT(comma_expand(exp_type_list, 2))> fo;
 			CallList2<comma_expand(exp_type_list_ph, 2)> cl(comma_expand(exp_actual_list_ph, 2));
 			auto_ptr<function_mem_wrapper_2<CT, RT, comma_expand(exp_type_list, 2), comma_expand(exp_type_list_ph, 2)> > wp =
-				new function_mem_wrapper_2<CT, RT, comma_expand(exp_type_list, 2), comma_expand(exp_type_list_ph, 2)>(cl);
+				mem_create_object<function_mem_wrapper_2<CT, RT, comma_expand(exp_type_list, 2), comma_expand(exp_type_list_ph, 2)> >(cl);
 			wp->fun_	= fun;
 			wp->self_	= self;
 			wp->cl_		= cl;
@@ -147,7 +148,7 @@ namespace bas
 			function<RT(comma_expand(exp_type_list, 2))> fo;
 			CallList2<comma_expand(exp_type_list_ph, 2)> cl(comma_expand(exp_actual_list_ph, 2));
 			auto_ptr<function_mem_wrapper_2<CT, RT, comma_expand(exp_type_list, 2), comma_expand(exp_type_list_ph, 2)> > wp =
-				new function_mem_wrapper_2<CT, RT, comma_expand(exp_type_list, 2), comma_expand(exp_type_list_ph, 2)>(cl);
+				mem_create_object<function_mem_wrapper_2<CT, RT, comma_expand(exp_type_list, 2), comma_expand(exp_type_list_ph, 2)> >(cl);
 			wp->fun_	= fun;
 			wp->self_	= self.raw_ptr();
 			wp->auto_self_ = self;
@@ -166,7 +167,7 @@ namespace bas
 			function<RT(comma_expand(exp_type_list, 3))> fo;
 			CallList3<comma_expand(exp_type_list_ph, 3)> cl(comma_expand(exp_actual_list_ph, 3));
 			auto_ptr<function_cstyle_wrapper_3<RT, comma_expand(exp_type_list, 3), comma_expand(exp_type_list_ph, 3)> > wp =
-				new function_cstyle_wrapper_3<RT, comma_expand(exp_type_list, 3), comma_expand(exp_type_list_ph, 3)>(cl);
+				mem_create_object<function_cstyle_wrapper_3<RT, comma_expand(exp_type_list, 3), comma_expand(exp_type_list_ph, 3)> >(cl);
 			wp->fun_	= fun;
 			wp->cl_		= cl;
 			fo.invoker_ = auto_ptr<function_wrapper<RT, comma_expand(exp_type_list, 3)> >::auto_ptr_dynamic_cast(wp);
@@ -182,7 +183,7 @@ namespace bas
 			function<RT(comma_expand(exp_type_list, 3))> fo;
 			CallList3<comma_expand(exp_type_list_ph, 3)> cl(comma_expand(exp_actual_list_ph, 3));
 			auto_ptr<function_mem_wrapper_3<CT, RT, comma_expand(exp_type_list, 3), comma_expand(exp_type_list_ph, 3)> > wp =
-				new function_mem_wrapper_3<CT, RT, comma_expand(exp_type_list, 3), comma_expand(exp_type_list_ph, 3)>(cl);
+				mem_create_object<function_mem_wrapper_3<CT, RT, comma_expand(exp_type_list, 3), comma_expand(exp_type_list_ph, 3)> >(cl);
 			wp->fun_	= fun;
 			wp->self_	= self;
 			wp->cl_		= cl;
@@ -199,7 +200,7 @@ namespace bas
 			function<RT(comma_expand(exp_type_list, 3))> fo;
 			CallList3<comma_expand(exp_type_list_ph, 3)> cl(comma_expand(exp_actual_list_ph, 3));
 			auto_ptr<function_mem_wrapper_3<CT, RT, comma_expand(exp_type_list, 3), comma_expand(exp_type_list_ph, 3)> > wp =
-				new function_mem_wrapper_3<CT, RT, comma_expand(exp_type_list, 3), comma_expand(exp_type_list_ph, 3)>(cl);
+				mem_create_object<function_mem_wrapper_3<CT, RT, comma_expand(exp_type_list, 3), comma_expand(exp_type_list_ph, 3)> >(cl);
 			wp->fun_	= fun;
 			wp->self_	= self.raw_ptr();
 			wp->auto_self_ = self;
@@ -218,7 +219,7 @@ namespace bas
 			function<RT(comma_expand(exp_type_list, 4))> fo;
 			CallList4<comma_expand(exp_type_list_ph, 4)> cl(comma_expand(exp_actual_list_ph, 4));
 			auto_ptr<function_cstyle_wrapper_4<RT, comma_expand(exp_type_list, 4), comma_expand(exp_type_list_ph, 4)> > wp =
-				new function_cstyle_wrapper_4<RT, comma_expand(exp_type_list, 4), comma_expand(exp_type_list_ph, 4)>(cl);
+				mem_create_object<function_cstyle_wrapper_4<RT, comma_expand(exp_type_list, 4), comma_expand(exp_type_list_ph, 4)> >(cl);
 			wp->fun_	= fun;
 			wp->cl_		= cl;
 			fo.invoker_ = auto_ptr<function_wrapper<RT, comma_expand(exp_type_list, 4)> >::auto_ptr_dynamic_cast(wp);
@@ -234,7 +235,7 @@ namespace bas
 			function<RT(comma_expand(exp_type_list, 4))> fo;
 			CallList4<comma_expand(exp_type_list_ph, 4)> cl(comma_expand(exp_actual_list_ph, 4));
 			auto_ptr<function_mem_wrapper_4<CT, RT, comma_expand(exp_type_list, 4), comma_expand(exp_type_list_ph, 4)> > wp =
-				new function_mem_wrapper_4<CT, RT, comma_expand(exp_type_list, 4), comma_expand(exp_type_list_ph, 4)>(cl);
+				mem_create_object<function_mem_wrapper_4<CT, RT, comma_expand(exp_type_list, 4), comma_expand(exp_type_list_ph, 4)> >(cl);
 			wp->fun_	= fun;
 			wp->self_	= self;
 			wp->cl_		= cl;
@@ -251,7 +252,7 @@ namespace bas
 			function<RT(comma_expand(exp_type_list, 4))> fo;
 			CallList4<comma_expand(exp_type_list_ph, 4)> cl(comma_expand(exp_actual_list_ph, 4));
 			auto_ptr<function_mem_wrapper_4<CT, RT, comma_expand(exp_type_list, 4), comma_expand(exp_type_list_ph, 4)> > wp =
-				new function_mem_wrapper_4<CT, RT, comma_expand(exp_type_list, 4), comma_expand(exp_type_list_ph, 4)>(cl);
+				mem_create_object<function_mem_wrapper_4<CT, RT, comma_expand(exp_type_list, 4), comma_expand(exp_type_list_ph, 4)> >(cl);
 			wp->fun_	= fun;
 			wp->self_	= self.raw_ptr();
 			wp->auto_self_ = self;
@@ -270,7 +271,7 @@ namespace bas
 			function<RT(comma_expand(exp_type_list, 5))> fo;
 			CallList5<comma_expand(exp_type_list_ph, 5)> cl(comma_expand(exp_actual_list_ph, 5));
 			auto_ptr<function_cstyle_wrapper_5<RT, comma_expand(exp_type_list, 5), comma_expand(exp_type_list_ph, 5)> > wp =
-				new function_cstyle_wrapper_5<RT, comma_expand(exp_type_list, 5), comma_expand(exp_type_list_ph, 5)>(cl);
+				mem_create_object<function_cstyle_wrapper_5<RT, comma_expand(exp_type_list, 5), comma_expand(exp_type_list_ph, 5)> >(cl);
 			wp->fun_	= fun;
 			wp->cl_		= cl;
 			fo.invoker_ = auto_ptr<function_wrapper<RT, comma_expand(exp_type_list, 5)> >::auto_ptr_dynamic_cast(wp);
@@ -286,7 +287,7 @@ namespace bas
 			function<RT(comma_expand(exp_type_list, 5))> fo;
 			CallList5<comma_expand(exp_type_list_ph, 5)> cl(comma_expand(exp_actual_list_ph, 5));
 			auto_ptr<function_mem_wrapper_5<CT, RT, comma_expand(exp_type_list, 5), comma_expand(exp_type_list_ph, 5)> > wp =
-				new function_mem_wrapper_5<CT, RT, comma_expand(exp_type_list, 5), comma_expand(exp_type_list_ph, 5)>(cl);
+				mem_create_object<function_mem_wrapper_5<CT, RT, comma_expand(exp_type_list, 5), comma_expand(exp_type_list_ph, 5)> >(cl);
 			wp->fun_	= fun;
 			wp->self_	= self;
 			wp->cl_		= cl;
@@ -303,7 +304,7 @@ namespace bas
 			function<RT(comma_expand(exp_type_list, 5))> fo;
 			CallList5<comma_expand(exp_type_list_ph, 5)> cl(comma_expand(exp_actual_list_ph, 5));
 			auto_ptr<function_mem_wrapper_5<CT, RT, comma_expand(exp_type_list, 5), comma_expand(exp_type_list_ph, 5)> > wp =
-				new function_mem_wrapper_5<CT, RT, comma_expand(exp_type_list, 5), comma_expand(exp_type_list_ph, 5)>(cl);
+				mem_create_object<function_mem_wrapper_5<CT, RT, comma_expand(exp_type_list, 5), comma_expand(exp_type_list_ph, 5)> >(cl);
 			wp->fun_	= fun;
 			wp->self_	= self.raw_ptr();
 			wp->auto_self_ = self;
@@ -322,7 +323,7 @@ namespace bas
 			function<RT(comma_expand(exp_type_list, 6))> fo;
 			CallList6<comma_expand(exp_type_list_ph, 6)> cl(comma_expand(exp_actual_list_ph, 6));
 			auto_ptr<function_cstyle_wrapper_6<RT, comma_expand(exp_type_list, 6), comma_expand(exp_type_list_ph, 6)> > wp =
-				new function_cstyle_wrapper_6<RT, comma_expand(exp_type_list, 6), comma_expand(exp_type_list_ph, 6)>(cl);
+				mem_create_object<function_cstyle_wrapper_6<RT, comma_expand(exp_type_list, 6), comma_expand(exp_type_list_ph, 6)> >(cl);
 			wp->fun_	= fun;
 			wp->cl_		= cl;
 			fo.invoker_ = auto_ptr<function_wrapper<RT, comma_expand(exp_type_list, 6)> >::auto_ptr_dynamic_cast(wp);
@@ -338,7 +339,7 @@ namespace bas
 			function<RT(comma_expand(exp_type_list, 6))> fo;
 			CallList6<comma_expand(exp_type_list_ph, 6)> cl(comma_expand(exp_actual_list_ph, 6));
 			auto_ptr<function_mem_wrapper_6<CT, RT, comma_expand(exp_type_list, 6), comma_expand(exp_type_list_ph, 6)> > wp =
-				new function_mem_wrapper_6<CT, RT, comma_expand(exp_type_list, 6), comma_expand(exp_type_list_ph, 6)>(cl);
+				mem_create_object<function_mem_wrapper_6<CT, RT, comma_expand(exp_type_list, 6), comma_expand(exp_type_list_ph, 6)> >(cl);
 			wp->fun_	= fun;
 			wp->self_	= self;
 			wp->cl_		= cl;
@@ -355,7 +356,7 @@ namespace bas
 			function<RT(comma_expand(exp_type_list, 6))> fo;
 			CallList6<comma_expand(exp_type_list_ph, 6)> cl(comma_expand(exp_actual_list_ph, 6));
 			auto_ptr<function_mem_wrapper_6<CT, RT, comma_expand(exp_type_list, 6), comma_expand(exp_type_list_ph, 6)> > wp =
-				new function_mem_wrapper_6<CT, RT, comma_expand(exp_type_list, 6), comma_expand(exp_type_list_ph, 6)>(cl);
+				mem_create_object<function_mem_wrapper_6<CT, RT, comma_expand(exp_type_list, 6), comma_expand(exp_type_list_ph, 6)> >(cl);
 			wp->fun_	= fun;
 			wp->self_	= self.raw_ptr();
 			wp->auto_self_ = self;
@@ -374,7 +375,7 @@ namespace bas
 			function<RT(comma_expand(exp_type_list, 7))> fo;
 			CallList7<comma_expand(exp_type_list_ph, 7)> cl(comma_expand(exp_actual_list_ph, 7));
 			auto_ptr<function_cstyle_wrapper_7<RT, comma_expand(exp_type_list, 7), comma_expand(exp_type_list_ph, 7)> > wp =
-				new function_cstyle_wrapper_7<RT, comma_expand(exp_type_list, 7), comma_expand(exp_type_list_ph, 7)>(cl);
+				mem_create_object<function_cstyle_wrapper_7<RT, comma_expand(exp_type_list, 7), comma_expand(exp_type_list_ph, 7)> >(cl);
 			wp->fun_	= fun;
 			wp->cl_		= cl;
 			fo.invoker_ = auto_ptr<function_wrapper<RT, comma_expand(exp_type_list, 7)> >::auto_ptr_dynamic_cast(wp);
@@ -390,7 +391,7 @@ namespace bas
 			function<RT(comma_expand(exp_type_list, 7))> fo;
 			CallList7<comma_expand(exp_type_list_ph, 7)> cl(comma_expand(exp_actual_list_ph, 7));
 			auto_ptr<function_mem_wrapper_7<CT, RT, comma_expand(exp_type_list, 7), comma_expand(exp_type_list_ph, 7)> > wp =
-				new function_mem_wrapper_7<CT, RT, comma_expand(exp_type_list, 7), comma_expand(exp_type_list_ph, 7)>(cl);
+				mem_create_object<function_mem_wrapper_7<CT, RT, comma_expand(exp_type_list, 7), comma_expand(exp_type_list_ph, 7)> >(cl);
 			wp->fun_	= fun;
 			wp->self_	= self;
 			wp->cl_		= cl;
@@ -407,7 +408,7 @@ namespace bas
 			function<RT(comma_expand(exp_type_list, 7))> fo;
 			CallList7<comma_expand(exp_type_list_ph, 7)> cl(comma_expand(exp_actual_list_ph, 7));
 			auto_ptr<function_mem_wrapper_7<CT, RT, comma_expand(exp_type_list, 7), comma_expand(exp_type_list_ph, 7)> > wp =
-				new function_mem_wrapper_7<CT, RT, comma_expand(exp_type_list, 7), comma_expand(exp_type_list_ph, 7)>(cl);
+				mem_create_object<function_mem_wrapper_7<CT, RT, comma_expand(exp_type_list, 7), comma_expand(exp_type_list_ph, 7)> >(cl);
 			wp->fun_	= fun;
 			wp->self_	= self.raw_ptr();
 			wp->auto_self_ = self;
@@ -426,7 +427,7 @@ namespace bas
 			function<RT(comma_expand(exp_type_list, 8))> fo;
 			CallList8<comma_expand(exp_type_list_ph, 8)> cl(comma_expand(exp_actual_list_ph, 8));
 			auto_ptr<function_cstyle_wrapper_8<RT, comma_expand(exp_type_list, 8), comma_expand(exp_type_list_ph, 8)> > wp =
-				new function_cstyle_wrapper_8<RT, comma_expand(exp_type_list, 8), comma_expand(exp_type_list_ph, 8)>(cl);
+				mem_create_object<function_cstyle_wrapper_8<RT, comma_expand(exp_type_list, 8), comma_expand(exp_type_list_ph, 8)> >(cl);
 			wp->fun_	= fun;
 			wp->cl_		= cl;
 			fo.invoker_ = auto_ptr<function_wrapper<RT, comma_expand(exp_type_list, 8)> >::auto_ptr_dynamic_cast(wp);
@@ -442,7 +443,7 @@ namespace bas
 			function<RT(comma_expand(exp_type_list, 8))> fo;
 			CallList8<comma_expand(exp_type_list_ph, 8)> cl(comma_expand(exp_actual_list_ph, 8));
 			auto_ptr<function_mem_wrapper_8<CT, RT, comma_expand(exp_type_list, 8), comma_expand(exp_type_list_ph, 8)> > wp =
-				new function_mem_wrapper_8<CT, RT, comma_expand(exp_type_list, 8), comma_expand(exp_type_list_ph, 8)>(cl);
+				mem_create_object<function_mem_wrapper_8<CT, RT, comma_expand(exp_type_list, 8), comma_expand(exp_type_list_ph, 8)> >(cl);
 			wp->fun_	= fun;
 			wp->self_	= self;
 			wp->cl_		= cl;
@@ -459,7 +460,7 @@ namespace bas
 			function<RT(comma_expand(exp_type_list, 8))> fo;
 			CallList8<comma_expand(exp_type_list_ph, 8)> cl(comma_expand(exp_actual_list_ph, 8));
 			auto_ptr<function_mem_wrapper_8<CT, RT, comma_expand(exp_type_list, 8), comma_expand(exp_type_list_ph, 8)> > wp =
-				new function_mem_wrapper_8<CT, RT, comma_expand(exp_type_list, 8), comma_expand(exp_type_list_ph, 8)>(cl);
+				mem_create_object<function_mem_wrapper_8<CT, RT, comma_expand(exp_type_list, 8), comma_expand(exp_type_list_ph, 8)> >(cl);
 			wp->fun_	= fun;
 			wp->self_	= self.raw_ptr();
 			wp->auto_self_ = self;
@@ -478,7 +479,7 @@ namespace bas
 			function<RT(comma_expand(exp_type_list, 9))> fo;
 			CallList9<comma_expand(exp_type_list_ph, 9)> cl(comma_expand(exp_actual_list_ph, 9));
 			auto_ptr<function_cstyle_wrapper_9<RT, comma_expand(exp_type_list, 9), comma_expand(exp_type_list_ph, 9)> > wp =
-				new function_cstyle_wrapper_9<RT, comma_expand(exp_type_list, 9), comma_expand(exp_type_list_ph, 9)>(cl);
+				mem_create_object<function_cstyle_wrapper_9<RT, comma_expand(exp_type_list, 9), comma_expand(exp_type_list_ph, 9)> >(cl);
 			wp->fun_	= fun;
 			wp->cl_		= cl;
 			fo.invoker_ = auto_ptr<function_wrapper<RT, comma_expand(exp_type_list, 9)> >::auto_ptr_dynamic_cast(wp);
@@ -494,7 +495,7 @@ namespace bas
 			function<RT(comma_expand(exp_type_list, 9))> fo;
 			CallList9<comma_expand(exp_type_list_ph, 9)> cl(comma_expand(exp_actual_list_ph, 9));
 			auto_ptr<function_mem_wrapper_9<CT, RT, comma_expand(exp_type_list, 9), comma_expand(exp_type_list_ph, 9)> > wp =
-				new function_mem_wrapper_9<CT, RT, comma_expand(exp_type_list, 9), comma_expand(exp_type_list_ph, 9)>(cl);
+				mem_create_object<function_mem_wrapper_9<CT, RT, comma_expand(exp_type_list, 9), comma_expand(exp_type_list_ph, 9)> >(cl);
 			wp->fun_	= fun;
 			wp->self_	= self;
 			wp->cl_		= cl;
@@ -511,7 +512,7 @@ namespace bas
 			function<RT(comma_expand(exp_type_list, 9))> fo;
 			CallList9<comma_expand(exp_type_list_ph, 9)> cl(comma_expand(exp_actual_list_ph, 9));
 			auto_ptr<function_mem_wrapper_9<CT, RT, comma_expand(exp_type_list, 9), comma_expand(exp_type_list_ph, 9)> > wp =
-				new function_mem_wrapper_9<CT, RT, comma_expand(exp_type_list, 9), comma_expand(exp_type_list_ph, 9)>(cl);
+				mem_create_object<function_mem_wrapper_9<CT, RT, comma_expand(exp_type_list, 9), comma_expand(exp_type_list_ph, 9)> >(cl);
 			wp->fun_	= fun;
 			wp->self_	= self.raw_ptr();
 			wp->auto_self_ = self;

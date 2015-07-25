@@ -1,7 +1,7 @@
 #ifndef __ACTIVEOBJECT_HPP_2015_06_03__
 #define __ACTIVEOBJECT_HPP_2015_06_03__
-#include <thread_pool.hpp>
 #include <bio.hpp>
+#include <thread_pool.hpp>
 
 namespace bas
 {

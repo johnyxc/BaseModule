@@ -2,6 +2,7 @@
 #define __AUTO_PTR_HPP_2015_05_26__
 #include <bio.hpp>
 #include <repeat.hpp>
+#include <memory.hpp>
 //////////////////////////////////////////////////////////////////////////
 
 namespace bas
@@ -15,7 +16,7 @@ namespace bas
 		public :
 			ptr_wrapper_t() : o_() {}
 			ptr_wrapper_t(T* o) : o_(o) {}
-			~ptr_wrapper_t() { if(o_) delete o_; }
+			~ptr_wrapper_t() { if(o_) mem_free(o_); }
 			ptr_wrapper_t(const ptr_wrapper_t& pwt) { o_ = pwt.o_; }
 			ptr_wrapper_t& operator = (const ptr_wrapper_t& pwt) { o_ = pwt.o_; return *this; }
 
@@ -29,8 +30,8 @@ namespace bas
 
 #define BIT_IMPL(T) \
 	public : \
-		auto_ptr() { pwt_ = new ptr_wrapper_t<T>; } \
-		auto_ptr(T* o) : pwt_() { pwt_ = new ptr_wrapper_t<T>(o); } \
+		auto_ptr() { pwt_ = mem_create_object<ptr_wrapper_t<T> >(); } \
+		auto_ptr(T* o) : pwt_() { pwt_ = mem_create_object<ptr_wrapper_t<T> >(o); } \
 		auto_ptr(ptr_wrapper_t<T>* pwt) { pwt_ = pwt; pwt_->retain(); } \
 		~auto_ptr() { if(pwt_) pwt_->release(); } \
 		auto_ptr(const auto_ptr& ap) { pwt_ = ap.pwt_; pwt_->retain(); } \
@@ -44,7 +45,6 @@ namespace bas
 		operator bool () { return valid(); } \
 	private : \
 		ptr_wrapper_t<T>* pwt_;
-
 		//////////////////////////////////////////////////////////////////////////
 
 		template <typename T>
@@ -127,14 +127,14 @@ namespace bas
 	template <typename T>
 	detail::auto_ptr<T> make_auto_ptr()
 	{
-		return detail::auto_ptr<T>(new T);
+		return detail::auto_ptr<T>(mem_create_object<T>());
 	}
 
 #define MAKE_AUTO_PTR_EXPAND(i) \
 	template <typename T, comma_expand(exp_template_list, i)> \
 	detail::auto_ptr<T> make_auto_ptr(comma_expand(exp_formal_list, i)) \
 	{ \
-		return detail::auto_ptr<T>(new T(comma_expand(exp_actual_list, i))); \
+		return detail::auto_ptr<T>(mem_create_object<T>(comma_expand(exp_actual_list, i))); \
 	}
 
 	blank_expand(MAKE_AUTO_PTR_EXPAND, 9)

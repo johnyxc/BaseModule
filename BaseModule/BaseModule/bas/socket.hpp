@@ -6,30 +6,43 @@
 #include <thread.hpp>
 #include <thread_pool.hpp>
 #include <mem_pool.hpp>
-#include <WinSock2.h>
+#include <error_def.hpp>
 #include <vector>
 #pragma warning(disable : 4996)
 
-//	TODO 注意规范错误码
+#ifdef _WIN32
+#include <WinSock2.h>
+#define SOCKET_FD SOCKET
+#else
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <fcntl.h>
+#include <netdb.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#define SOCKET_FD int
+#endif
+
+SET_MODULE_ERR_BAS(mod_sock, 0)
+BEGIN_ERROR_CODE(SOCK)
+END_ERROR_CODE()
+
 namespace bas
 {
 	namespace detail
 	{
-		static void set_non_block(SOCKET sock)
+		static void set_non_block(SOCKET_FD sock)
 		{
-			{
-				int flag = 1;
-				setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (const char*)&flag, (int)sizeof(flag));
-			}
-
-			{
-				unsigned long flag = 1;
-				ioctlsocket(sock, FIONBIO, &flag);
-				setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (const char*)&flag, sizeof(flag));
-			}
+#ifdef _WIN32
+			unsigned long flag = 1;
+			ioctlsocket(sock, FIONBIO, &flag);
+			setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (const char*)&flag, sizeof(flag));
+#else
+			fcntl(sock, F_SETFD, O_NONBLOCK);
+#endif
 		}
 
-		static void set_reuse(SOCKET sock)
+		static void set_reuse(SOCKET_FD sock)
 		{
 			int flag = 1;
 			setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (const char*)&flag, (int)sizeof(flag));
@@ -93,11 +106,11 @@ namespace bas
 			//////////////////////////////////////////////////////////////////////////
 
 		public :
-			socket_t() : sock_(), cur_rd_evt_(), cur_wr_evt_(), recv_buf_(), send_buf_() {}
+			socket_t() : sock_(), cur_wr_evt_(), cur_rd_evt_(), recv_buf_(), send_buf_() {}
 			~socket_t() {}
 
 		public :
-			void bind_socket(SOCKET sock)
+			void bind_socket(SOCKET_FD sock)
 			{
 				if(sock <= 0) return;
 				sock_ = sock;
@@ -264,14 +277,19 @@ namespace bas
 
 				if(sock_)
 				{
+#ifdef _WIN32
 					::shutdown(sock_, SD_BOTH);
 					::closesocket(sock_);
+#else
+					::shutdown(sock_, SHUT_RDWR);
+					::close(sock_);
+#endif
 					sock_ = 0;
 				}
 			}
 
 		private :
-			SOCKET			sock_;
+			SOCKET_FD		sock_;
 			recv_callback	recv_cb_;
 			send_callback	send_cb_;
 			error_callback	err_cb_;
@@ -302,23 +320,26 @@ namespace bas
 				resolve_info* ri = mem_create_object<resolve_info>();
 				strncpy(ri->url, url, strlen(url));
 				ri->cb	= cb;
-				::CreateThread(0, 0, i_on_resolve, (LPVOID)ri, 0, 0);
+
+				thread_t* trd = mem_create_object<thread_t>(bind(&resolver_t::i_on_resolve, this, ri));
+				trd->run();
+				trd->release();
+
 				return true;
 			}
 
-			static DWORD WINAPI i_on_resolve(LPVOID param)
+			void i_on_resolve(resolve_info* ri)
 			{
-				resolve_info* ri = (resolve_info*)param;
 				if(ri->url[0])
 				{
-					hostent* host = gethostbyname(ri->url);
-					if(!host) { ri->cb(std::vector<auto_ptr<char> >(), -1); return 0; }
+					struct hostent* host = gethostbyname(ri->url);
+					if(!host) { ri->cb(std::vector<auto_ptr<char> >(), -1); return; }
 
 					std::vector<auto_ptr<char> > addr_list;
 					int idx = 0;
 					while(host->h_addr_list[idx] != 0)
 					{
-						auto_ptr<char> addr = new char[16];
+						auto_ptr<char> addr = (char*)mem_alloc(16);
 						char* ip_addr = inet_ntoa(*(in_addr*)host->h_addr_list[idx++]);
 						if(!ip_addr) continue;
 						strncpy(addr.raw_ptr(), ip_addr, strlen(ip_addr));
@@ -328,7 +349,6 @@ namespace bas
 					ri->cb(addr_list, 0);
 				}
 				mem_delete_object(ri);
-				return 0;
 			}
 		};
 
@@ -339,9 +359,9 @@ namespace bas
 			struct connect_info
 			{
 				connect_info() : sock(-1), timeout() {}
-				SOCKET sock;
-				connect_callback cb;
-				unsigned int timeout;
+				SOCKET_FD			sock;
+				connect_callback	cb;
+				unsigned int		timeout;
 			};
 
 		public :
@@ -378,23 +398,34 @@ namespace bas
 
 			bool i_connect(const char* ip, unsigned short port, connect_callback cb, unsigned int timeout)
 			{
-				SOCKET sock = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-				if(sock == INVALID_SOCKET) { return false; }
-				set_non_block(sock);
+#ifdef _WIN32
+				SOCKET_FD sock = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+				if(sock == INVALID_SOCKET) return false;
 
 				sockaddr_in addr;
 				addr.sin_family = AF_INET;
 				addr.sin_addr.s_addr = inet_addr(ip);
 				addr.sin_port = htons(port);
+#else
+				SOCKET_FD sock = ::socket(AF_INET, SOCK_STREAM, 0);
+				if(sock == -1) return false;
 
-				::connect(sock, (SOCKADDR*)&addr, sizeof(addr));
+				sockaddr_in addr;
+				addr.sin_family = AF_INET;
+				inet_pton(AF_INET, ip, &addr.sin_addr);
+				addr.sin_port = htons(port);
+#endif
+				set_non_block(sock);
+				::connect(sock, (struct sockaddr*)&addr, sizeof(addr));
 
 				connect_info* ci = mem_create_object<connect_info>();
 				ci->sock = sock;
 				ci->cb	 = cb;
 				ci->timeout = timeout;
 
-				::CreateThread(0, 0, i_on_connect, (LPVOID)ci, 0, 0);
+				thread_t* trd = mem_create_object<thread_t>(bind(&connector_t::i_on_connect, this, ci));
+				trd->run();
+				trd->release();
 				return true;
 			}
 
@@ -404,10 +435,10 @@ namespace bas
 				i_connect(addr[0].raw_ptr(), port, cb, timeout);
 			}
 
-			static DWORD WINAPI i_on_connect(LPVOID param)
+			//	Windows & Linux 都使用 select 模型
+			void i_on_connect(connect_info* ci)
 			{
-				connect_info* ci = (connect_info*)param;
-				if(ci->sock == -1) { mem_delete_object(ci); return 0; }
+				if(ci->sock == -1) mem_delete_object(ci);
 
 				timeval tv = {};
 				tv.tv_usec = 1;
@@ -418,10 +449,16 @@ namespace bas
 				FD_SET(ci->sock, &rw_fd);
 				tmp_rw_fd = rw_fd;
 
-				int res = ::select(0, 0, &tmp_rw_fd, 0, &tv);
+                int res = -1;
+#ifdef _WIN32
+				res = ::select(0, 0, &tmp_rw_fd, 0, &tv);
+#else
+                res = ::select(ci->sock+1, 0, &tmp_rw_fd, 0, &tv);
+#endif
 				if(res > 0)
 				{
-					if(FD_ISSET(rw_fd.fd_array[0], &tmp_rw_fd))
+#ifdef _WIN32
+                    if(FD_ISSET(rw_fd.fd_array[0], &tmp_rw_fd))
 					{
 						if(rw_fd.fd_array[0] == ci->sock)
 						{	//	连接成功
@@ -430,14 +467,20 @@ namespace bas
 							ci->cb(sock, 0);
 						}
 					}
+#else
+                    if(FD_ISSET(ci->sock, &tmp_rw_fd))
+					{   //	连接成功
+                        socket_t sock;
+                        sock.bind_socket(ci->sock);
+                        ci->cb(sock, 0);
+					}
+#endif
 				}
 				else
 				{	//	连接失败
 					ci->cb(socket_t(), -1);
 				}
-
 				mem_delete_object(ci);
-				return 0;
 			}
 
 		private :
@@ -461,11 +504,12 @@ namespace bas
 
 			bool asyn_accept(const char* ip, unsigned short port, int backlog = 1024)
 			{
+#ifdef _WIN32
 				sock_ = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-				if(sock_ == INVALID_SOCKET) { return false; }
-
-				set_non_block(sock_);
-				set_reuse(sock_);
+#else
+				sock_ = ::socket(AF_INET, SOCK_STREAM, 0);
+#endif
+				if(sock_ == -1) return false;
 
 				sockaddr_in addr;
 				addr.sin_family = AF_INET;
@@ -476,8 +520,11 @@ namespace bas
 					addr.sin_addr.s_addr = htonl(INADDR_ANY);
 				}
 
-				if(::bind(sock_, (sockaddr*)&addr, sizeof(addr)) != 0) { return false; }
-				if(::listen(sock_, backlog) != 0) { return false; }
+				set_non_block(sock_);
+				set_reuse(sock_);
+
+				if(::bind(sock_, (struct sockaddr*)&addr, sizeof(addr)) != 0) return false;
+				if(::listen(sock_, backlog) != 0) return false;
 
 				evt_ = default_thread_pool()->get_event(sock_, EV_READ | EV_PERSIST, bind(&acceptor_t::i_on_accept, bas::retain(this), _1, _2, acpt_cb_));
 				default_thread_pool()->post(evt_);
@@ -492,18 +539,23 @@ namespace bas
 		private :
 			void i_on_accept(evutil_socket_t sock, short type, accept_callback cb)
 			{
-				sockaddr addr;
-				int len = sizeof(addr);
-				SOCKET client_sock = ::accept(sock, &addr, &len);
+				struct sockaddr addr;
+#ifdef _WIN32
+                int len = sizeof(addr);
+				SOCKET_FD client_sock = ::accept(sock, &addr, &len);
+#else
+                socklen_t len = sizeof(addr);
+                SOCKET_FD client_sock = ::accept(sock, &addr, &len);
+#endif
 
-				if(client_sock == INVALID_SOCKET) { cb(socket_t(), -1); return; }
+				if(client_sock == -1) { cb(socket_t(), -1); return; }
 				socket_t so;
 				so.bind_socket(client_sock);
 				cb(so, 0);
 			}
 
 		private :
-			SOCKET sock_;
+			SOCKET_FD sock_;
 			event* evt_;
 			accept_callback acpt_cb_;
 		};
