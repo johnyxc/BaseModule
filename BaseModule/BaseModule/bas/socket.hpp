@@ -8,10 +8,12 @@
 #include <mem_pool.hpp>
 #include <error_def.hpp>
 #include <vector>
+#include <algorithm>
 #pragma warning(disable : 4996)
 
 #ifdef _WIN32
 #include <WinSock2.h>
+#include <WS2tcpip.h>
 #define SOCKET_FD SOCKET
 #else
 #include <sys/types.h>
@@ -20,6 +22,7 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #define SOCKET_FD int
 #endif
 
@@ -31,31 +34,9 @@ namespace bas
 {
 	namespace detail
 	{
-		static void set_non_block(SOCKET_FD sock)
+		//	基础套接字对象，提供一些公用函数
+		struct socket_base_t
 		{
-#ifdef _WIN32
-			unsigned long flag = 1;
-			ioctlsocket(sock, FIONBIO, &flag);
-			setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (const char*)&flag, sizeof(flag));
-#else
-			fcntl(sock, F_SETFD, O_NONBLOCK);
-#endif
-		}
-
-		static void set_reuse(SOCKET_FD sock)
-		{
-			int flag = 1;
-			setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (const char*)&flag, (int)sizeof(flag));
-		}
-		//////////////////////////////////////////////////////////////////////////
-
-		//	套接字对象
-		struct socket_t : bio_bas_t<socket_t>
-		{
-			typedef function<void (int, int)>	recv_callback;	//	签名：接收长度、错误码
-			typedef function<void (int, int)>	send_callback;	//	签名：发送长度、错误码
-			typedef function<void (int)>		error_callback;	//	签名：错误码
-
 			struct buffer
 			{
 			public :
@@ -106,6 +87,242 @@ namespace bas
 			//////////////////////////////////////////////////////////////////////////
 
 		public :
+			socket_base_t() {}
+			virtual ~socket_base_t() {}
+
+		public :
+			static void set_non_block(SOCKET_FD sock)
+			{
+#ifdef _WIN32
+				unsigned long flag = 1;
+				::ioctlsocket(sock, FIONBIO, &flag);
+				::setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (const char*)&flag, sizeof(flag));
+#else
+				int flag = 1;
+				::fcntl(sock, F_SETFD, O_NONBLOCK);
+				::setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (const void*)&flag, sizeof(flag));
+#endif
+			}
+
+			static void set_reuse(SOCKET_FD sock)
+			{
+				int flag = 1;
+				setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (const char*)&flag, sizeof(flag));
+			}
+		};
+
+		//	套接字收发服务
+		struct socket_service_t : bio_bas_t<socket_service_t>
+		{
+			typedef function<void (int, int, const char*, unsigned short)> recv_callback;
+
+			struct sock_info
+			{
+				SOCKET_FD sock;
+				recv_callback recv_cb;
+				socket_base_t::buffer* buf;
+				static bool sock_cmp (const sock_info& sil, const sock_info& sir) { return sil.sock < sir.sock; }
+				bool operator == (const SOCKET_FD& s) { return sock == s; }
+			};
+
+		public :
+			socket_service_t() : max_sock_()
+			{
+				run_ = true;
+				mutex_ = get_mutex();
+				thread_ = mem_create_object<thread_t>(bind(&socket_service_t::work_thread, this));
+				thread_->run();
+			}
+			~socket_service_t()
+			{
+				run_ = false;
+				thread_->join();
+				release_mutex(mutex_);
+			}
+
+		public :
+			static socket_service_t* instance()
+			{
+				if(!self_) self_ = mem_create_object<socket_service_t>();
+				return self_;
+			}
+
+		public :
+			void insert_socket(SOCKET_FD sock, socket_base_t::buffer* buf, const recv_callback& cb)
+			{
+				sock_info si;
+				si.sock		= sock;
+				si.recv_cb	= cb;
+				si.buf		= buf;
+				if(sock > max_sock_) max_sock_ = sock;
+
+				lock(mutex_);
+				std::vector<sock_info>::iterator iter;
+				if((iter = std::find(sock_list_.begin(), sock_list_.end(), sock)) != sock_list_.end())
+				{
+					(*iter).buf = buf;
+					(*iter).recv_cb = cb;
+				}
+				else
+				{
+					sock_list_.push_back(si);
+					std::sort(sock_list_.begin(), sock_list_.end(), sock_info::sock_cmp);
+					max_sock_ = sock_list_[sock_list_.size() - 1].sock;
+				}
+				unlock(mutex_);
+			}
+
+			void remove_socket(SOCKET_FD sock)
+			{	//	删除不会破坏 vector 的相对顺序
+				lock(mutex_);
+				std::vector<sock_info>::iterator iter;
+				for(iter = sock_list_.begin(); iter != sock_list_.end(); ++iter)
+				{
+					if((*iter).sock == sock)
+					{
+						sock_list_.erase(iter);
+						break;
+					}
+				}
+				max_sock_ = sock_list_[sock_list_.size() - 1].sock;
+				unlock(mutex_);
+			}
+
+			void work_thread()
+			{
+				fd_set rd_fd;
+				timeval tv = {};
+				tv.tv_sec = 0;
+				tv.tv_usec = 50 * 1000;
+				int ret = 0;
+
+				while(run_)
+				{
+					FD_ZERO(&rd_fd);
+					for(unsigned int i = 0; i < sock_list_.size(); i++)
+					{
+						FD_SET(sock_list_[i].sock, &rd_fd);
+					}
+#ifdef _WIN32
+					ret = ::select(0, &rd_fd, 0, 0, &tv);
+#else
+					ret = ::select(max_sock_+1, &rd_fd, 0, 0, &tv);
+#endif
+					if(ret == 0) {
+						continue;
+					} else {
+						for(unsigned int i = 0; i < sock_list_.size(); i++)
+						{
+							if(FD_ISSET(sock_list_[i].sock, &rd_fd))
+							{
+								if(sock_list_[i].buf)
+								{
+									socket_base_t::buffer* buf = sock_list_[i].buf;
+									char* read_buf = buf->buffer_get_buf() + buf->buffer_get_pro_len();
+									int len = buf->buffer_get_len();
+
+									sockaddr_in addr;
+									socklen_t addr_len = sizeof(addr);
+
+									ret = ::recvfrom(sock_list_[i].sock, read_buf, len, 0, (sockaddr*)&addr, &addr_len);
+									if(ret > 0)
+									{
+										buf->buffer_set_pro_len(buf->buffer_get_pro_len() + ret);
+										if(buf->buffer_get_pro_len() == buf->buffer_get_len())
+										{
+											sock_list_[i].recv_cb(buf->buffer_get_len(), 0, inet_ntoa(addr.sin_addr), addr.sin_port);
+											sock_list_[i].buf = 0;
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+
+		private :
+			static socket_service_t* self_;
+			std::vector<sock_info>	 sock_list_;
+			SOCKET_FD	max_sock_;
+			thread_t*	thread_;
+			HMUTEX		mutex_;
+			bool		run_;
+		};
+		socket_service_t* socket_service_t::self_ = 0;
+
+		//	UDP套接字对象
+		struct udp_socket_t : public bio_bas_t<udp_socket_t>, private socket_base_t
+		{
+		public :
+			udp_socket_t() { sock_svc_ = socket_service_t::instance(); }
+			~udp_socket_t() {}
+
+		public :
+			bool init(const char* ip, unsigned short port)
+			{
+#ifdef _WIN32
+				sock_ = ::socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+				if(sock_ == INVALID_SOCKET) return false;
+#else
+				sock_ = ::socket(AF_INET, SOCK_DGRAM, 0);
+				if(sock_ == -1) return false;
+#endif
+				sockaddr_in addr;
+				addr.sin_family = AF_INET;
+				addr.sin_port = htons(port);
+				if(ip) {
+					addr.sin_addr.s_addr = inet_addr(ip);
+				} else {
+					addr.sin_addr.s_addr = htonl(INADDR_ANY);
+				}
+
+				socket_base_t::set_non_block(sock_);
+				return (::bind(sock_, (sockaddr*)&addr, sizeof(sockaddr)) == 0);
+			}
+
+			void uninit()
+			{
+				sock_svc_->remove_socket(sock_);
+			}
+
+			int send(const char* ip, unsigned short port, const char* buf, int len)
+			{
+				if(!ip || !buf) return 0;
+
+				struct sockaddr_in addr;
+				addr.sin_family = AF_INET;
+				addr.sin_addr.s_addr = inet_addr(ip);
+				addr.sin_port = htons(port);
+
+				return ::sendto(sock_, buf, len, 0, (sockaddr*)&addr, sizeof(sockaddr));
+			}
+
+			bool asyn_recv(char* buf, int len, const socket_service_t::recv_callback& cb)
+			{
+				if(!buf) return false;
+
+				socket_base_t::buffer* send_buf = mem_create_object<socket_base_t::buffer>();
+				send_buf->buffer_set_buf(buf);
+				send_buf->buffer_set_len(len);
+
+				sock_svc_->insert_socket(sock_, send_buf, cb);
+				return true;
+			}
+
+		private :
+			SOCKET_FD sock_;
+			socket_service_t* sock_svc_;
+		};
+
+		//	TCP套接字对象
+		struct socket_t : public bio_bas_t<socket_t>, private socket_base_t
+		{
+			typedef function<void (int, int)>	recv_callback;	//	签名：接收长度、错误码
+			typedef function<void (int, int)>	send_callback;	//	签名：发送长度、错误码
+			typedef function<void (int)>		error_callback;	//	签名：错误码
+
+		public :
 			socket_t() : sock_(), cur_wr_evt_(), cur_rd_evt_(), recv_buf_(), send_buf_() {}
 			~socket_t() {}
 
@@ -133,6 +350,31 @@ namespace bas
 			void bind_error_callback(error_callback cb)
 			{
 				err_cb_ = cb;
+			}
+
+			void get_peer_info(char* addr, int len, unsigned short* port)
+			{
+				struct sockaddr saddr;
+				socklen_t alen = sizeof(saddr);
+				if(::getpeername(sock_, &saddr, &alen)) return;
+
+				struct sockaddr_in* saddr_in = (sockaddr_in*)&saddr;
+				const char* ip = inet_ntoa(saddr_in->sin_addr);
+
+				if(addr)
+				{
+					int rlen = strlen(ip);
+					if(len > rlen)
+					{
+						strcpy(addr, ip);
+						addr[rlen] = '\0';
+					}
+				}
+
+				if(port)
+				{
+					*port = ::ntohs(saddr_in->sin_port);
+				}
 			}
 
 			//	异步接收（指定长度）
@@ -415,7 +657,7 @@ namespace bas
 				inet_pton(AF_INET, ip, &addr.sin_addr);
 				addr.sin_port = htons(port);
 #endif
-				set_non_block(sock);
+				socket_base_t::set_non_block(sock);
 				::connect(sock, (struct sockaddr*)&addr, sizeof(addr));
 
 				connect_info* ci = mem_create_object<connect_info>();
@@ -520,8 +762,8 @@ namespace bas
 					addr.sin_addr.s_addr = htonl(INADDR_ANY);
 				}
 
-				set_non_block(sock_);
-				set_reuse(sock_);
+				socket_base_t::set_non_block(sock_);
+				socket_base_t::set_reuse(sock_);
 
 				if(::bind(sock_, (struct sockaddr*)&addr, sizeof(addr)) != 0) return false;
 				if(::listen(sock_, backlog) != 0) return false;

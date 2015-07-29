@@ -19,12 +19,12 @@ namespace bas
 		{
 		public :
 			explicit thread_t(function<void()> fo) : fo_(fo), tid_() {}
-			~thread_t() { /*join();*/ }
+			~thread_t() {}
 
 		public :
 			bool run()
 			{
-				this->retain();
+				retain();
 #ifdef _WIN32
 				handle_ = ::CreateThread(0, 0, thread_wrap, this, 0, (LPDWORD)&tid_);
 				return handle_ != 0;
