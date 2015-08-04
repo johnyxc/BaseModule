@@ -28,7 +28,7 @@ namespace bas
 			struct pt_param
 			{
 				pt_param() : pthread_(), pbase_(), alive_(false) {}
-				auto_ptr<thread_t> pthread_;
+				thread_t* pthread_;
 				event_base* pbase_;
 				bool alive_;
 			};
@@ -49,7 +49,7 @@ namespace bas
 				{
 					pthread_[i].alive_ = true;
 					pthread_[i].pbase_ = event_base_new();
-					pthread_[i].pthread_ = bas::make_auto_ptr<thread_t>(bind(&thread_pool_t::i_on_thread, this, &pthread_[i]));
+					pthread_[i].pthread_ = mem_create_object<thread_t>(bind(&thread_pool_t::i_on_thread, bas::retain(this), &pthread_[i]));
 					pthread_[i].pthread_->run();
 				}
 			}
@@ -60,6 +60,7 @@ namespace bas
 				{
 					pthread_[i].alive_ = false;
 					pthread_[i].pthread_->join();
+					mem_delete_object(pthread_[i].pthread_);
 				}
 			}
 

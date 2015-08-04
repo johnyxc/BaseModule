@@ -132,7 +132,7 @@ namespace bas
 			{
 				run_ = true;
 				mutex_ = get_mutex();
-				thread_ = mem_create_object<thread_t>(bind(&socket_service_t::work_thread, this));
+				thread_ = mem_create_object<thread_t>(bind(&socket_service_t::work_thread, bas::retain(this)));
 				thread_->run();
 			}
 			~socket_service_t()
@@ -286,7 +286,7 @@ namespace bas
 		public :
 			overlength_stream_t() : recv_len_(), cur_block_()
 			{
-				on_err_ = bind(&overlength_stream_t::i_on_error, this, _1);
+				on_err_ = bind(&overlength_stream_t::i_on_error, bas::retain(this), _1);
 			}
 			~overlength_stream_t() {}
 
@@ -315,7 +315,7 @@ namespace bas
 			//	需自行解析用户协议
 			void asyn_recv(char* buf, int len)
 			{
-				on_recv_ = bind(&overlength_stream_t::i_on_recv, this, _1, buf, len);
+				on_recv_ = bind(&overlength_stream_t::i_on_recv, bas::retain(this), _1, buf, len);
 				do_recv_((char*)&header_, sizeof(stream_header), false);
 			}
 
@@ -332,7 +332,7 @@ namespace bas
 				char* tmp_buf = (char*)mem_alloc(len);
 				mem_copy((void*)tmp_buf, (void*)buf, len);
 
-				on_send_ = bind(&overlength_stream_t::i_on_send, this, _1, tmp_buf, 0, sh.total_len);
+				on_send_ = bind(&overlength_stream_t::i_on_send, bas::retain(this), _1, tmp_buf, 0, sh.total_len);
 				do_send_((char*)&sh, sizeof(stream_header), false);
 			}
 
@@ -512,14 +512,14 @@ namespace bas
 			{
 				recv_cb_ = cb;
 				recv_buf_ = mem_create_object<buffer>();
-				cur_rd_evt_ = default_thread_pool()->get_event(sock_, EV_READ, bind(&socket_t::i_on_recv, this, _1, _2));
+				cur_rd_evt_ = default_thread_pool()->get_event(sock_, EV_READ, bind(&socket_t::i_on_recv, bas::retain(this), _1, _2));
 			}
 
 			void bind_send_callback(send_callback cb)
 			{
 				send_cb_ = cb;
 				send_buf_ = mem_create_object<buffer>();
-				cur_wr_evt_ = default_thread_pool()->get_event(sock_, EV_WRITE, bind(&socket_t::i_on_send, this, _1, _2));
+				cur_wr_evt_ = default_thread_pool()->get_event(sock_, EV_WRITE, bind(&socket_t::i_on_send, bas::retain(this), _1, _2));
 			}
 
 			void bind_error_callback(error_callback cb)
@@ -764,7 +764,7 @@ namespace bas
 				strncpy(ri->url, url, strlen(url));
 				ri->cb	= cb;
 
-				thread_t* trd = mem_create_object<thread_t>(bind(&resolver_t::i_on_resolve, this, ri));
+				thread_t* trd = mem_create_object<thread_t>(bind(&resolver_t::i_on_resolve, bas::retain(this), ri));
 				trd->run();
 				trd->release();
 
@@ -867,7 +867,7 @@ namespace bas
 				ci->cb	 = cb;
 				ci->timeout = timeout;
 
-				thread_t* trd = mem_create_object<thread_t>(bind(&connector_t::i_on_connect, this, ci));
+				thread_t* trd = mem_create_object<thread_t>(bind(&connector_t::i_on_connect, bas::retain(this), ci));
 				trd->run();
 				trd->release();
 				return true;
