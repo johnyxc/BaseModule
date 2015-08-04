@@ -244,6 +244,11 @@ namespace bas
 				return buf;
 			}
 
+			void* realloc(void* old_buf, int new_size)
+			{
+				return old_buf;
+			}
+
 			bool free(void* buf)
 			{
 				if(!buf) return false;

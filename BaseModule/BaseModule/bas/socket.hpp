@@ -34,6 +34,8 @@ namespace bas
 {
 	namespace detail
 	{
+#define MAX_BLOCK_SIZE	(1 << 14)
+
 		//	基础套接字对象，提供一些公用函数
 		struct socket_base_t
 		{
@@ -251,6 +253,177 @@ namespace bas
 		};
 		socket_service_t* socket_service_t::self_ = 0;
 
+		//	大数据流辅助处理对象
+		struct overlength_stream_t : bio_bas_t<overlength_stream_t>
+		{
+			struct stream_header
+			{
+				int total_len;
+				int total_block;
+				int block_size;
+			};
+
+			struct frame_header
+			{
+				int frame_len;
+				int block_id;
+			};
+
+			//	用户
+			typedef function<void (int, int)>			recv_callback;		//	签名：接收长度、错误码
+			typedef function<void (int, int)>			send_callback;		//	签名：发送长度、错误码
+			typedef function<void (int)>				error_callback;		//	签名：错误码
+
+			//	内部逻辑
+			typedef function<void (int)>				on_recv;			//	签名：接收长度
+			typedef function<void (int)>				on_send;			//	签名：发送长度
+			typedef function<void (int)>				on_error;			//	签名：错误码
+
+			//	对外事件
+			typedef function<bool (char*, int, bool)>		recv_action;
+			typedef function<bool (const char*, int, bool)>	send_action;
+
+		public :
+			overlength_stream_t() : recv_len_(), cur_block_()
+			{
+				on_err_ = bind(&overlength_stream_t::i_on_error, this, _1);
+			}
+			~overlength_stream_t() {}
+
+		public :
+			void bind_recv_callback(recv_callback cb)
+			{
+				recv_cb_ = cb;
+			}
+
+			void bind_send_callback(send_callback cb)
+			{
+				send_cb_ = cb;
+			}
+
+			void bind_error_callback(error_callback cb)
+			{
+				err_cb_ = cb;
+			}
+
+			void set_recv_len(int len)
+			{
+				recv_len_ = len;
+			}
+
+			//	大数据上层一次性接收完整数据流
+			//	需自行解析用户协议
+			void asyn_recv(char* buf, int len)
+			{
+				on_recv_ = bind(&overlength_stream_t::i_on_recv, this, _1, buf, len);
+				do_recv_((char*)&header_, sizeof(stream_header), false);
+			}
+
+			void asyn_send(const char* buf, int len)
+			{
+				int blocks = 0;
+				((len & 0x4000) == 0) ? (blocks = len >> 14) : (blocks = (len >> 14) + 1);
+
+				stream_header sh = {};
+				sh.total_len	= len;
+				sh.total_block	= blocks;
+				sh.block_size	= MAX_BLOCK_SIZE;
+
+				char* tmp_buf = (char*)mem_alloc(len);
+				mem_copy((void*)tmp_buf, (void*)buf, len);
+
+				on_send_ = bind(&overlength_stream_t::i_on_send, this, _1, tmp_buf, 0, sh.total_len);
+				do_send_((char*)&sh, sizeof(stream_header), false);
+			}
+
+		private :
+			void i_on_send(int bt, char* buf, int block, int total_len)
+			{
+				if(bt == 0)
+				{
+					send_cb_(0, 1);
+					mem_free((void*)buf);
+					release();
+					return;
+				}
+
+				int has_sent = (block - 1) * MAX_BLOCK_SIZE + bt;
+				int remain = total_len - has_sent;
+				if(remain == 0)
+				{
+					send_cb_(total_len, 0);
+					mem_free((void*)buf);
+					release();
+					return;
+				}
+
+				frame_header fh = {};
+				fh.block_id = block;
+				fh.frame_len = (remain > MAX_BLOCK_SIZE) ? MAX_BLOCK_SIZE : remain;
+				char* send_buf = (char*)mem_alloc(sizeof(frame_header) + fh.frame_len);
+				mem_copy((void*)send_buf, (void*)&fh, sizeof(frame_header));
+				mem_copy((void*)send_buf, (void*)(buf + has_sent), fh.frame_len);
+
+				do_send_(send_buf, sizeof(frame_header) + fh.frame_len, false);
+				mem_free((void*)send_buf);
+			}
+
+			void i_on_recv(int bt, char* recv_buf, int recv_len)
+			{
+				if(bt == 0) return;
+
+				if(header_.total_len != 0)
+				{	//	以完整流头部数据长度字段作为接收总长
+					if(recv_len < header_.total_len)
+					{
+						recv_buf = (char*)realloc(recv_buf, header_.total_len);
+					}
+					recv_len = header_.total_len;
+					bt = 0;
+					mem_zero((void*)&header_, sizeof(stream_header));
+				}
+
+				if(frame_.frame_len == 0)
+				{
+					recv_len_ += bt;
+					if(recv_len_ == recv_len)
+					{
+						recv_cb_(recv_len, 0);
+						return;
+					}
+
+					do_recv_((char*)&frame_, sizeof(frame_header), false);
+				}
+				else
+				{
+					int len = frame_.frame_len;
+					mem_zero((void*)&frame_, sizeof(frame_header));
+					do_recv_(recv_buf + recv_len_, len, false);
+				}
+			}
+
+			void i_on_error(int ec)
+			{
+				err_cb_(ec);
+			}
+
+		public :
+			on_recv			on_recv_;
+			on_send			on_send_;
+			on_error		on_err_;
+			recv_action		do_recv_;
+			send_action		do_send_;
+
+		private :
+			recv_callback	recv_cb_;
+			send_callback	send_cb_;
+			error_callback	err_cb_;
+			int				recv_len_;
+			int				cur_block_;
+			stream_header	header_;
+			frame_header	frame_;
+		};
+
 		//	UDP套接字对象
 		struct udp_socket_t : public bio_bas_t<udp_socket_t>, private socket_base_t
 		{
@@ -316,6 +489,8 @@ namespace bas
 		};
 
 		//	TCP套接字对象
+		//	对于超过 16K 的数据底层会自动分片发送或接收
+		//	分片过程对上层透明
 		struct socket_t : public bio_bas_t<socket_t>, private socket_base_t
 		{
 			typedef function<void (int, int)>	recv_callback;	//	签名：接收长度、错误码
@@ -378,10 +553,10 @@ namespace bas
 			}
 
 			//	异步接收（指定长度）
-			bool asyn_recv(char* buf, int len)
+			bool asyn_recv(char* buf, int len, bool slice = false)
 			{
 				if(!sock_ || !buf) return false;
-				i_asyn_recv(buf, len, false);
+				i_asyn_recv(buf, len, false, slice);
 				return true;
 			}
 
@@ -389,31 +564,44 @@ namespace bas
 			bool asyn_recv_some(char* buf, int len)
 			{
 				if(!sock_ || !buf) return false;
-				i_asyn_recv(buf, len, true);
+				i_asyn_recv(buf, len, true, false);
 				return true;
 			}
 
 			//	异步发送
-			bool asyn_send(char* buf, int len)
+			bool asyn_send(const char* buf, int len, bool slice = false)
 			{
 				if(!sock_ || !buf) return false;
 
-				send_buf_->clear();
-				send_buf_->buffer_alloc_buf(len);
-				memcpy((void*)send_buf_->buffer_get_buf(), (void*)buf, len);
-				send_buf_->buffer_set_len(len);
-
-				int bt = ::send(sock_, send_buf_->buffer_get_buf(), send_buf_->buffer_get_len(), 0);
-				if(bt <= 0)
+				if(slice)
 				{
-					i_on_clear();
-					return false;
+					overlength_stream_t* ost = mem_create_object<overlength_stream_t>();
+					ost->bind_recv_callback(recv_cb_);
+					ost->bind_send_callback(send_cb_);
+					ost->bind_error_callback(err_cb_);
+					ost->do_recv_ = bind(&socket_t::asyn_recv, bas::retain(this), _1, _2, _3);
+					ost->do_send_ = bind(&socket_t::asyn_send, bas::retain(this), _1, _2, _3);
+					ost->asyn_send(buf, len);
 				}
-				send_buf_->buffer_set_pro_len(send_buf_->buffer_get_pro_len() + bt);
+				else
+				{
+					send_buf_->clear();
+					send_buf_->buffer_alloc_buf(len);
+					memcpy((void*)send_buf_->buffer_get_buf(), (void*)buf, len);
+					send_buf_->buffer_set_len(len);
 
-				//	每次调用都是一次性发送行为
-				default_thread_pool()->post(cur_wr_evt_);
-				return true;
+					int bt = ::send(sock_, send_buf_->buffer_get_buf(), send_buf_->buffer_get_len(), 0);
+					if(bt <= 0)
+					{
+						i_on_clear();
+						return false;
+					}
+					send_buf_->buffer_set_pro_len(send_buf_->buffer_get_pro_len() + bt);
+
+					//	每次调用都是一次性发送行为
+					default_thread_pool()->post(cur_wr_evt_);
+					return true;
+				}
 			}
 
 			void clear()
@@ -422,15 +610,28 @@ namespace bas
 			}
 
 		private :
-			void i_asyn_recv(char* buf, int len, bool some)
+			void i_asyn_recv(char* buf, int len, bool some, bool slice)
 			{
-				recv_buf_->clear();
-				recv_buf_->buffer_set_buf(buf);
-				recv_buf_->buffer_set_len(len);
-				recv_buf_->buffer_set_recv_some(some);
+				if(slice)
+				{
+					overlength_stream_t* ost = mem_create_object<overlength_stream_t>();
+					ost->bind_recv_callback(recv_cb_);
+					ost->bind_send_callback(send_cb_);
+					ost->bind_error_callback(err_cb_);
+					ost->do_recv_ = bind(&socket_t::asyn_recv, bas::retain(this), _1, _2, _3);
+					ost->do_send_ = bind(&socket_t::asyn_send, bas::retain(this), _1, _2, _3);
+					ost->asyn_recv(buf, len);
+				}
+				else
+				{
+					recv_buf_->clear();
+					recv_buf_->buffer_set_buf(buf);
+					recv_buf_->buffer_set_len(len);
+					recv_buf_->buffer_set_recv_some(some);
 
-				//	每次调用都是一次性接收行为
-				default_thread_pool()->post(cur_rd_evt_);
+					//	每次调用都是一次性接收行为
+					default_thread_pool()->post(cur_rd_evt_);
+				}
 			}
 
 			void i_on_recv(evutil_socket_t sock, short type)
@@ -625,7 +826,8 @@ namespace bas
 		private :
 			bool check_url(const char* ip)
 			{
-				for(unsigned int i = 0; i < strlen(ip); i++)
+				int len = strlen(ip);
+				for(unsigned int i = 0; i < len; i++)
 				{
 					if((ip[i] >= 'a' && ip[i] <= 'z') ||
 						(ip[i] >= 'A' && ip[i] <= 'Z')) { return true; }
