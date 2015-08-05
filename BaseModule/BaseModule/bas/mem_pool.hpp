@@ -84,6 +84,43 @@ namespace bas
 				return (char*)cur + sizeof(alloc_unit);
 			}
 
+			void* realloc_buffer(void* old_buf, int new_size)
+			{
+				alloc_unit* cur = (alloc_unit*)((char*)old_buf - sizeof(alloc_unit));
+				if(new_size <= cur->size) return old_buf;
+
+				alloc_unit* next = cur->next;
+				if(!next || !next->bfree) return 0;
+
+				//	由于 alloc_unit 的 size 字段不包含结构本身的长度
+				//	所以计算可用长度时需加上
+				int size_able = cur->size + next->size + sizeof(alloc_unit);
+				int remain = size_able - new_size;
+				if(remain >= 0)
+				{
+					if(remain <= sizeof(alloc_unit))
+					{	//	剩余全部分配给此块
+						i_write_head_info(cur, cur->offset, size_able, 0, cur->prev, cur->next->next);
+						--free_count_;
+					}
+					else
+					{
+						next = (alloc_unit*)((char*)cur + new_size + sizeof(alloc_unit));
+						alloc_unit* temp_next = cur->next->next;
+
+						//	更新本块信息
+						i_write_head_info(cur, cur->offset, new_size, 0, cur->prev, next);
+
+						//	更新下一块信息
+						i_write_head_info(next, (char*)next - (char*)head_, remain - sizeof(alloc_unit), 1, cur, temp_next);
+					}
+
+					return old_buf;
+				}
+
+				return 0;
+			}
+
 			void free_buffer(void* buf)
 			{
 				if(!buf ||
@@ -96,6 +133,10 @@ namespace bas
 				i_merge_unit(cur);
 			}
 
+			int get_unit_size(void* buf)
+			{
+				return ((alloc_unit*)((char*)buf - sizeof(alloc_unit)))->size;
+			}
 			int get_total_size() { return total_size_; }
 			int get_free_count() { return free_count_; }
 
@@ -219,6 +260,8 @@ namespace bas
 
 			void* alloc(int size)
 			{
+				if(size == 0) return 0;
+
 				void* buf = 0;
 				block_t* block = 0;
 
@@ -246,7 +289,32 @@ namespace bas
 
 			void* realloc(void* old_buf, int new_size)
 			{
-				return old_buf;
+				if(!old_buf)
+				{
+					return this->alloc(new_size);
+				}
+
+				if(new_size == 0)
+				{
+					this->free(old_buf);
+					return 0;
+				}
+
+				lock(mutex_);
+				std::map<void*, block_t*>::const_iterator iter;
+				iter = buf_block_map_.find(old_buf);
+				block_t* block = iter->second;
+				void* new_buf = block->realloc_buffer(old_buf, new_size);
+				if(!new_buf)
+				{
+					int size = block->get_unit_size(old_buf);
+					block->free_buffer(old_buf);
+					new_buf = this->alloc(new_size);
+					if(new_buf) memmove(new_buf, old_buf, size);
+				}
+				unlock(mutex_);
+
+				return new_buf;
 			}
 
 			bool free(void* buf)

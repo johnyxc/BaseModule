@@ -31,7 +31,7 @@ char* mem_strdup(const char* str)
 
 void* mem_copy(void* dst, void const* src, unsigned int size)
 {
-	return memcpy(dst, src, size);
+	return memmove(dst, src, size);
 }
 
 void* mem_zero(void* ptr, unsigned int size)
