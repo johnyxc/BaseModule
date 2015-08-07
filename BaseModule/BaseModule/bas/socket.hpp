@@ -322,7 +322,7 @@ namespace bas
 			void asyn_send(const char* buf, int len)
 			{
 				int blocks = 0;
-				((len & 0x4000) == 0) ? (blocks = len >> 14) : (blocks = (len >> 14) + 1);
+				((len & 0x3FFF) == 0) ? (blocks = len >> 14) : (blocks = (len >> 14) + 1);
 
 				stream_header sh = {};
 				sh.total_len	= len;
