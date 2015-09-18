@@ -46,7 +46,7 @@
 				GeneratePreprocessedFile="0"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="3"
+				RuntimeLibrary="1"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				DebugInformationFormat="4"
@@ -118,7 +118,7 @@
 				EnableIntrinsicFunctions="true"
 				AdditionalIncludeDirectories=".;./bas;./libevent/inc"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
-				RuntimeLibrary="2"
+				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
@@ -218,11 +218,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\bas\event_waiter.hpp"
+				>
+			</File>
+			<File
 				RelativePath=".\bas\function.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\bas\init.hpp"
+				RelativePath=".\bas\init.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\bas\init.h"
 				>
 			</File>
 			<File
@@ -259,6 +267,10 @@
 			</File>
 			<File
 				RelativePath=".\bas\thread_pool.hpp"
+				>
+			</File>
+			<File
+				RelativePath=".\bas\timer.hpp"
 				>
 			</File>
 		</Filter>

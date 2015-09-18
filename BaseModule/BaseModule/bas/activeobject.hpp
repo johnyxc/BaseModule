@@ -17,7 +17,7 @@ namespace bas
 		public :
 			void post(const function<void ()>& fo)
 			{
-				default_thread_pool()->post(fo);
+				default_thread_pool()->post(fo, 0);
 			}
 		};
 	}

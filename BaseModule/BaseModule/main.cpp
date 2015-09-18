@@ -1,17 +1,14 @@
-#include <osfunc.hpp>
-#include <activeobject.hpp>
 #include <bio.hpp>
-#include <function.hpp>
-#include <bind.hpp>
-#include <auto_ptr.hpp>
-#include <stdio.h>
+#include <init.h>
 #include <socket.hpp>
-#include <demo.hpp>
-#include <stdio.h>
-#include <windows.h>
+#include <mem_pool.hpp>
+#include <memory.hpp>
+#include <error_def.hpp>
+
 namespace base = bas::detail;
 
-bas_init();
+//	基础模块 : 4134行
+bas_init(1);
 
 struct A : base::bio_bas_t<A>
 {
@@ -101,12 +98,12 @@ void OnRecv(int bt, int err)
 		std::string req = "GET /AttendanceSys/ HTTP/1.1\r\nHost: attendance.sicent.com\r\nConnection: keep-alive\r\nCookie: ";
 		req += cookie;
 		req += "\r\n\r\n\r\n";
-		g_sock.asyn_send(const_cast<char*>(req.c_str()), req.length(), base::socket_t::send_callback());
+		//g_sock.asyn_send(const_cast<char*>(req.c_str()), req.length(), base::socket_t::send_callback());
 		flag = 0;
 	}
 
 	memset((void*)g_recv_buf, 0, sizeof(g_recv_buf));
-	g_sock.asyn_recv_some(g_recv_buf, 1023, base::bind(&OnRecv, base::_1, base::_2));
+//	g_sock.asyn_recv_some(g_recv_buf, 1023, base::bind(&OnRecv, base::_1, base::_2));
 }
 
 void OnConnect(base::socket_t sock, int err)
@@ -127,9 +124,9 @@ void OnConnect(base::socket_t sock, int err)
 
 		printf("connect success\n");
 		g_sock = sock;
-		g_sock.asyn_send(const_cast<char*>(req.c_str()), req.length(), base::socket_t::send_callback());
+//		g_sock.asyn_send(const_cast<char*>(req.c_str()), req.length(), base::socket_t::send_callback());
 		memset((void*)g_recv_buf, 0, sizeof(g_recv_buf));
-		g_sock.asyn_recv_some(g_recv_buf, 1023, base::bind(&OnRecv, base::_1, base::_2));
+//		g_sock.asyn_recv_some(g_recv_buf, 1023, base::bind(&OnRecv, base::_1, base::_2));
 	}
 }
 
@@ -144,23 +141,66 @@ void OnAccept(base::socket_t sock, int err)
 		printf("Accept success\n");
 		g_sock = sock;
 		memset((void*)g_recv_buf, 0, sizeof(g_recv_buf));
-		g_sock.asyn_send("aaa", strlen("aaa"), base::socket_t::send_callback());
-		g_sock.asyn_recv_some(g_recv_buf, 1023, base::bind(&OnRecv, base::_1, base::_2));
+//		g_sock.asyn_send("aaa", strlen("aaa"), base::socket_t::send_callback());
+//		g_sock.asyn_recv_some(g_recv_buf, 1023, base::bind(&OnRecv, base::_1, base::_2));
 	}
 }
 
-//	TODO 注意两个全局变量的编译问题
-void main()
+struct ClassTest : base::bio_bas_t<ClassTest>
 {
+	ClassTest() : run_(true)
 	{
-		base::function<void ()> fo;
+		thread_ = new base::thread_t(base::bind(&ClassTest::print_loop, this));
+		fo_ = base::bind(&ClassTest::Test1, this);
+		thread_->run();
+	}
+
+	~ClassTest()
+	{
+		run_ = false;
+		thread_->join();
+	}
+
+	void Test1() { printf("Test1\n"); }
+	void Test2() { printf("Test2\n"); }
+
+	void print_loop()
+	{
+		while(run_)
 		{
-			A* a = new A;
-			fo = base::bind(&A::f0, a);
-			a->release();
-			fo();
+			fo_();
+			Sleep(1000);
 		}
 	}
+
+	base::thread_t* thread_;
+	base::function<void ()> fo_;
+	bool run_;
+};
+
+void main()
+{
+	base::mem_pool_manager_t mgr;
+	mgr.init();
+
+	void* data0 = mgr.alloc(100);
+	memcpy(data0, (void*)(char*)"abc", strlen("abc"));
+
+	void* data1 = mgr.alloc(200);
+	memcpy(data1, (void*)(char*)"xxx", strlen("xxx"));
+
+	void* data2 = mgr.alloc(300);
+	memcpy(data2, (void*)(char*)"xxxx", strlen("xxxx"));
+
+	mgr.free(data1);
+	data0 = mgr.realloc(data0, 400);
+
+	mgr.free(data2);
+	mgr.free(data0);
+
+	ClassTest* ct = mem_create_object<ClassTest>();
+	bool run = ct->run_;
+	ct->release();
 
 	{
 		base::auto_ptr<Base<int> > bs;
@@ -197,14 +237,15 @@ void main()
 	fo9(110, 120, 70.0, &t, 'i', 0x0, &t, &t, str);
 	fo9_2(120, 130);
 
- 	bas::default_thread_pool()->run();
+ 	//bas::default_thread_pool()->run();
 	base::connector_t co;
 	//co.asyn_connect("10.34.43.55", 8869, base::bind(OnConnect, base::_1, base::_2), 5000);
 	//co.asyn_connect("attendance.sicent.com", 80, base::bind(OnConnect, base::_1, base::_2), 5000);
 
 	{
 		base::acceptor_t* acpt = new base::acceptor_t;
-		acpt->asyn_accept(0, 8869, bind(&OnAccept, base::_1, base::_2));
+		acpt->set_accept_callback(bind(&OnAccept, base::_1, base::_2));
+		acpt->asyn_accept(0, 8869);
 		//acpt->stop();
 		//acpt->release();
 	}
@@ -231,3 +272,58 @@ void main()
 
 	SuspendThread(GetCurrentThread());
 }
+
+/*
+#include <stdio.h>
+#include <stdlib.h>
+#include <tchar.h>
+#include <windows.h>
+
+LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	switch(uMsg)
+	{
+	case WM_PAINT :
+		{
+			printf("WM_PAINT MSG\n");
+		}
+		break;
+	default :
+		return WndProc(hwnd, uMsg, wParam, lParam);
+	}
+}
+
+int main(int argc,char *argv[]) 
+{
+	HWND hwnd;
+	HDC hdc;
+	hwnd = GetConsoleWindow();
+	hdc = GetDC(hwnd);
+	system("color 1d");
+
+	LONG wp = GetWindowLong(hwnd, GWL_WNDPROC);
+	SetWindowLong(hwnd, GWL_WNDPROC, (LONG)WndProc);
+	DWORD err = GetLastError();
+
+	HPEN pen, oldpen;
+	pen = CreatePen(PS_SOLID, 1, RGB(0, 200, 0));
+	oldpen = (HPEN)SelectObject(hdc, pen);
+
+	RECT rect = { 0, 0, 10, 100 };
+	HBRUSH brush, oldbrush;
+	LOGBRUSH lb = {};
+	lb.lbColor = RGB(0, 200, 0);
+	brush = CreateBrushIndirect(&lb);
+	oldbrush = (HBRUSH)SelectObject(hdc, brush);
+
+	FillRect(hdc, &rect, brush);
+
+	SelectObject(hdc, oldpen);
+	SelectObject(hdc, oldbrush);
+
+	DeleteObject(pen);
+	ReleaseDC(hwnd,hdc);
+	getchar();
+	return 0;
+}
+*/

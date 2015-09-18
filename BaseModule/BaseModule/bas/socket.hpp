@@ -48,7 +48,6 @@ namespace bas
 			public :
 				void buffer_alloc_buf(int len)
 				{
-					if(buf_ && !is_ref_) mem_free(buf_);
 					buf_ = (char*)mem_zalloc(len);
 					is_ref_ = false;
 				}
@@ -140,13 +139,6 @@ namespace bas
 				run_ = false;
 				thread_->join();
 				release_mutex(mutex_);
-			}
-
-		public :
-			static socket_service_t* instance()
-			{
-				if(!self_) self_ = mem_create_object<socket_service_t>();
-				return self_;
 			}
 
 		public :
@@ -251,7 +243,6 @@ namespace bas
 			HMUTEX		mutex_;
 			bool		run_;
 		};
-		socket_service_t* socket_service_t::self_ = 0;
 
 		//	大数据流辅助处理对象
 		struct overlength_stream_t : bio_bas_t<overlength_stream_t>
@@ -428,8 +419,8 @@ namespace bas
 		struct udp_socket_t : public bio_bas_t<udp_socket_t>, private socket_base_t
 		{
 		public :
-			udp_socket_t() { sock_svc_ = socket_service_t::instance(); }
-			~udp_socket_t() {}
+			udp_socket_t() { sock_svc_ = mem_create_object<socket_service_t>(); }
+			~udp_socket_t() { if(sock_svc_) mem_delete_object(sock_svc_); }
 
 		public :
 			bool init(const char* ip, unsigned short port)
@@ -587,7 +578,7 @@ namespace bas
 				{
 					send_buf_->clear();
 					send_buf_->buffer_alloc_buf(len);
-					memcpy((void*)send_buf_->buffer_get_buf(), (void*)buf, len);
+					mem_copy((void*)send_buf_->buffer_get_buf(), (void*)buf, len);
 					send_buf_->buffer_set_len(len);
 
 					int bt = ::send(sock_, send_buf_->buffer_get_buf(), send_buf_->buffer_get_len(), 0);
@@ -600,13 +591,18 @@ namespace bas
 
 					//	每次调用都是一次性发送行为
 					default_thread_pool()->post(cur_wr_evt_);
-					return true;
 				}
+				return true;
 			}
 
 			void clear()
 			{
-				default_thread_pool()->post(bind(&socket_t::i_on_clear, bas::retain(this)));
+				i_on_clear();
+			}
+
+			bool valid()
+			{
+				return (sock_ != 0);
 			}
 
 		private :
@@ -642,7 +638,7 @@ namespace bas
 					0);
 				if(bt <= 0)
 				{	//	错误事件
-					i_err_occur(0, 0);
+					i_err_occur(1, 0);
 					return;
 				}
 
@@ -678,7 +674,7 @@ namespace bas
 						0);
 					if(bt <= 0)
 					{
-						i_err_occur(0, 0);
+						i_err_occur(1, 0);
 						return;
 					}
 					send_buf_->buffer_set_pro_len(send_buf_->buffer_get_pro_len() + bt);
@@ -733,13 +729,15 @@ namespace bas
 
 		private :
 			SOCKET_FD		sock_;
-			recv_callback	recv_cb_;
-			send_callback	send_cb_;
-			error_callback	err_cb_;
 			event*			cur_wr_evt_;
 			event*			cur_rd_evt_;
 			buffer*			recv_buf_;
 			buffer*			send_buf_;
+
+		public :
+			recv_callback	recv_cb_;
+			send_callback	send_cb_;
+			error_callback	err_cb_;
 		};
 
 		//	域名解析对象
@@ -761,7 +759,9 @@ namespace bas
 			bool asyn_resolve(const char* url, resolve_callback cb)
 			{
 				resolve_info* ri = mem_create_object<resolve_info>();
-				strncpy(ri->url, url, strlen(url));
+				int len = strlen(url);
+				strncpy(ri->url, url, len);
+				ri->url[len] = '\0';
 				ri->cb	= cb;
 
 				thread_t* trd = mem_create_object<thread_t>(bind(&resolver_t::i_on_resolve, bas::retain(this), ri));
@@ -776,17 +776,21 @@ namespace bas
 				if(ri->url[0])
 				{
 					struct hostent* host = gethostbyname(ri->url);
-					if(!host) { ri->cb(std::vector<auto_ptr<char> >(), -1); return; }
+					if(!host) 
+					{
+						ri->cb(std::vector<auto_ptr<char> >(), -1);
+						mem_delete_object(ri);
+						return;
+					}
 
 					std::vector<auto_ptr<char> > addr_list;
 					int idx = 0;
 					while(host->h_addr_list[idx] != 0)
 					{
-						auto_ptr<char> addr = (char*)mem_alloc(16);
+						auto_ptr<char> addr = (char*)mem_zalloc(16);
 						char* ip_addr = inet_ntoa(*(in_addr*)host->h_addr_list[idx++]);
 						if(!ip_addr) continue;
 						strncpy(addr.raw_ptr(), ip_addr, strlen(ip_addr));
-						addr.raw_ptr()[15] = '\0';
 						addr_list.push_back(addr);
 					}
 					ri->cb(addr_list, 0);
@@ -798,7 +802,7 @@ namespace bas
 		//	连接对象
 		struct connector_t : active_object_t<connector_t>
 		{
-			typedef function<void (socket_t, int)> connect_callback;
+			typedef function<void (socket_t*, int)> connect_callback;
 			struct connect_info
 			{
 				connect_info() : sock(-1), timeout() {}
@@ -875,7 +879,7 @@ namespace bas
 
 			void i_on_resolve(std::vector<auto_ptr<char> > addr, int err, unsigned short port, connect_callback cb, unsigned int timeout)
 			{
-				if(err) { cb(socket_t(), -1); return; }
+				if(err) { cb(0, -1); return; }
 				i_connect(addr[0].raw_ptr(), port, cb, timeout);
 			}
 
@@ -906,8 +910,8 @@ namespace bas
 					{
 						if(rw_fd.fd_array[0] == ci->sock)
 						{	//	连接成功
-							socket_t sock;
-							sock.bind_socket(ci->sock);
+							socket_t* sock = mem_create_object<socket_t>();
+							sock->bind_socket(ci->sock);
 							ci->cb(sock, 0);
 						}
 					}
@@ -922,7 +926,8 @@ namespace bas
 				}
 				else
 				{	//	连接失败
-					ci->cb(socket_t(), -1);
+					::closesocket(ci->sock);
+					ci->cb(0, -1);
 				}
 				mem_delete_object(ci);
 			}
@@ -934,7 +939,7 @@ namespace bas
 		//	监听对象
 		struct acceptor_t : bio_bas_t<acceptor_t>
 		{
-			typedef function<void (socket_t, int)> accept_callback;
+			typedef function<void (socket_t*, int)> accept_callback;
 
 		public :
 			acceptor_t() : sock_(), evt_() {}
@@ -992,9 +997,9 @@ namespace bas
                 SOCKET_FD client_sock = ::accept(sock, &addr, &len);
 #endif
 
-				if(client_sock == -1) { cb(socket_t(), -1); return; }
-				socket_t so;
-				so.bind_socket(client_sock);
+				if(client_sock == -1) { cb(0, -1); return; }
+				socket_t* so = mem_create_object<socket_t>();
+				so->bind_socket(client_sock);
 				cb(so, 0);
 			}
 

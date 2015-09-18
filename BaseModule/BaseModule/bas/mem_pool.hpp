@@ -40,7 +40,7 @@ namespace bas
 			struct alloc_unit
 			{
 				int offset;			//	距离块起始位置的偏移
-				int size;			//	本单元块大小
+				int size;			//	本单元块大小（包含块头）
 				int bfree;			//	是否空闲
 				alloc_unit* prev;	//	上一块单元块位置
 				alloc_unit* next;	//	下一块单元块位置
@@ -62,9 +62,10 @@ namespace bas
 
 				int offset = (char*)cur - (char*)head_;
 				int cur_len = cur->size;
-				alloc_unit* next = (alloc_unit*)((char*)cur + size + sizeof(alloc_unit));
+				int need_len = size + sizeof(alloc_unit);
+				alloc_unit* next = cur->next;
 
-				if(cur_len <= size + sizeof(alloc_unit))
+				if(next && (cur_len - need_len <= sizeof(alloc_unit)))
 				{	//	剩余全部分配给此块
 					i_write_head_info(cur, offset, cur->size, 0, prev, cur->next);
 					--free_count_;
@@ -72,51 +73,62 @@ namespace bas
 				else
 				{
 					alloc_unit* temp_next = cur->next;
-					int next_size = cur->size - size - sizeof(alloc_unit);
+					int next_size = cur->size - need_len;
 
-					//	更新本块信息
-					i_write_head_info(cur, offset, size, 0, prev, next);
+					if(next_size <= sizeof(alloc_unit))
+					{	//	剩余全部分配给此块
+						i_write_head_info(cur, offset, cur->size, 0, prev, cur->next);
+						--free_count_;
+					}
+					else
+					{
+						next = (alloc_unit*)((char*)cur + need_len);
 
-					//	更新下一块信息
-					i_write_head_info(next, (char*)next - (char*)head_, next_size, 1, cur, temp_next);
+						//	更新本块信息
+						i_write_head_info(cur, offset, need_len, 0, prev, next);
+
+						//	更新下一块信息
+						i_write_head_info(next, (char*)next - (char*)head_, next_size, 1, cur, temp_next);
+					}
 				}
 
 				return (char*)cur + sizeof(alloc_unit);
 			}
 
+			//	未测勿用
 			void* realloc_buffer(void* old_buf, int new_size)
 			{
+				/*
 				alloc_unit* cur = (alloc_unit*)((char*)old_buf - sizeof(alloc_unit));
 				if(new_size <= cur->size) return old_buf;
 
 				alloc_unit* next = cur->next;
-				if(!next || !next->bfree) return 0;
+				if(!next->bfree) return 0;
 
-				//	由于 alloc_unit 的 size 字段不包含结构本身的长度
-				//	所以计算可用长度时需加上
-				int size_able = cur->size + next->size + sizeof(alloc_unit);
+				int size_able = cur->size + next->size - sizeof(alloc_unit);
 				int remain = size_able - new_size;
 				if(remain >= 0)
 				{
 					if(remain <= sizeof(alloc_unit))
 					{	//	剩余全部分配给此块
-						i_write_head_info(cur, cur->offset, size_able, 0, cur->prev, cur->next->next);
+						i_write_head_info(cur, cur->offset, size_able + sizeof(alloc_unit), 0, cur->prev, cur->next ? cur->next->next : 0);
 						--free_count_;
 					}
 					else
 					{
 						next = (alloc_unit*)((char*)cur + new_size + sizeof(alloc_unit));
-						alloc_unit* temp_next = cur->next->next;
+						alloc_unit* temp_next = cur->next ? cur->next->next : 0;
 
 						//	更新本块信息
-						i_write_head_info(cur, cur->offset, new_size, 0, cur->prev, next);
+						i_write_head_info(cur, cur->offset, new_size + sizeof(alloc_unit), 0, cur->prev, next);
 
 						//	更新下一块信息
-						i_write_head_info(next, (char*)next - (char*)head_, remain - sizeof(alloc_unit), 1, cur, temp_next);
+						i_write_head_info(next, (char*)next - (char*)head_, remain, 1, cur, temp_next);
 					}
 
 					return old_buf;
 				}
+				*/
 
 				return 0;
 			}
@@ -178,7 +190,7 @@ namespace bas
 				while(cur->next)
 				{
 					if(cur->next->bfree) {
-						cur->size = cur->size + cur->next->size + sizeof(alloc_unit);
+						cur->size = cur->size + cur->next->size;
 						--free_count_;
 					} else {
 						break;
@@ -205,7 +217,7 @@ namespace bas
 				alloc_unit* bm = 0;
 				while(tmp)
 				{
-					if(tmp->bfree && tmp->size >= size)
+					if(tmp->bfree && (tmp->size >= (size + sizeof(alloc_unit))))
 					{
 						int gap = tmp->size - size;
 						if(gap < alpha)
@@ -337,10 +349,18 @@ namespace bas
 			std::vector<block_t*> block_list_;
 			std::map<void*, block_t*> buf_block_map_;
 			HMUTEX mutex_;
+
+		public :
+			static mem_pool_manager_t* instance()
+			{
+				if(!self_) self_ = new mem_pool_manager_t;
+				return self_;
+			}
+
+		private :
+			static mem_pool_manager_t* self_;
 		};
 	}
-
-	detail::mem_pool_manager_t* mem_pool = new detail::mem_pool_manager_t();
 }
 
 #endif

@@ -54,24 +54,27 @@ namespace bas
 			template <typename TS>
 			static detail::auto_ptr<T> auto_ptr_dynamic_cast(detail::auto_ptr<TS> psrc)
 			{
-				auto_ptr<T> pdst((T*)psrc.raw_ptr());
+				TS* sptr = psrc.raw_ptr();
+				T* dptr = (T*)sptr;
+				auto_ptr<T> pdst(dptr);
 				pdst->retain();
 				return pdst;
 			}
 
 		public :
 			auto_ptr() : pwt_() {}
-			~auto_ptr() { if(pwt_) pwt_->release(); }
+			~auto_ptr() { if(pwt_) pwt_->release(); pwt_ = 0; }
 			auto_ptr(T* o) : pwt_(o) {}
 			auto_ptr(const auto_ptr& ap)
 			{
 				if(!ap.pwt_) return;
 				pwt_ = ap.pwt_;
-				pwt_->retain();
+				if(pwt_) pwt_->retain();
 			}
 			auto_ptr& operator = (const auto_ptr& ap)
 			{
 				if(pwt_) pwt_->release();
+				pwt_ = 0;
 				if(!ap.pwt_) return *this;
 				pwt_ = ap.pwt_;
 				pwt_->retain();

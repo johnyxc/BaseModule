@@ -7,43 +7,46 @@
 #include <mem_pool.hpp>
 #include <new>
 
-void* mem_alloc(unsigned int size)
+static void* mem_alloc(unsigned int size)
 {
-	return bas::mem_pool->alloc(size);
+	//return bas::detail::mem_pool_manager_t::instance()->alloc(size);
+	return malloc(size);
 }
 
-void* mem_zalloc(unsigned int size)
+static void* mem_zalloc(unsigned int size)
 {
-	void* p = bas::mem_pool->alloc(size);
+	//void* p = bas::detail::mem_pool_manager_t::instance()->alloc(size);
+	void* p = malloc(size);
 	memset(p, 0, size);
 	return p;
 }
 
-void mem_free(void* ptr)
+static void mem_free(void* ptr)
 {
-	bas::mem_pool->free(ptr);
+	//bas::detail::mem_pool_manager_t::instance()->free(ptr);
+	free(ptr);
 }
 
-char* mem_strdup(const char* str)
+static char* mem_strdup(const char* str)
 {
 	return strdup(str);
 }
 
-void* mem_copy(void* dst, void const* src, unsigned int size)
+static void* mem_copy(void* dst, void const* src, unsigned int size)
 {
 	return memmove(dst, src, size);
 }
 
-void* mem_zero(void* ptr, unsigned int size)
+static void* mem_zero(void* ptr, unsigned int size)
 {
 	return memset(ptr, 0, size);
 }
 
 //	对象创建
 template <typename T>
-T* mem_create_object()
+static T* mem_create_object()
 {
-	void* buf = malloc(sizeof(T));
+	void* buf = mem_alloc(sizeof(T));
 	return new (buf)T();
 }
 
@@ -51,7 +54,7 @@ T* mem_create_object()
 	template <typename T, comma_expand(exp_template_list, i)> \
 	T* mem_create_object(comma_expand(exp_formal_list, i)) \
 { \
-	void* buf = malloc(sizeof(T)); \
+	void* buf = mem_alloc(sizeof(T)); \
 	return new (buf)T(comma_expand(exp_actual_list, i)); \
 }
 
@@ -59,10 +62,10 @@ blank_expand(mem_create_decl, 9);
 
 //	对象释放
 template <typename T>
-void mem_delete_object(T* o)
+static void mem_delete_object(T* o)
 {
 	o->~T();
-	free(o);
+	mem_free((void*)o);
 }
 
 #endif
