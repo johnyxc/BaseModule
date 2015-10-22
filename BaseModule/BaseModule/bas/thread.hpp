@@ -19,7 +19,13 @@ namespace bas
 		{
 		public :
 			explicit thread_t(function<void()> fo) : fo_(fo), tid_() {}
-			~thread_t() {}
+			~thread_t()
+			{
+#ifdef _WIN32
+				if(handle_) CloseHandle(handle_);
+#else
+#endif
+			}
 
 		public :
 			bool run()
@@ -66,6 +72,7 @@ namespace bas
 				pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
 				thread_t* pThis = (thread_t*)arg;
 				pThis->fo_();
+				pthread_detach(pthread_self());
 				pThis->release();
 				return 0;
 			}

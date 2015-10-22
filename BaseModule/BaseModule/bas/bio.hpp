@@ -17,6 +17,7 @@ namespace bas
 
 		public :
 			void retain() { atom_inc(&ref_); }
+			long get_ref() { return ref_; }
 			void release()
 			{
 				atom_sub(&ref_);

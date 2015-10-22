@@ -20,6 +20,16 @@ namespace bas
 				lock(mutex_);
 			}
 
+			bool try_enter_section()
+			{
+				return try_lock(mutex_);
+			}
+
+			int get_section_own_count()
+			{
+				return get_own_count(mutex_);
+			}
+
 			void leave_section()
 			{
 				unlock(mutex_);

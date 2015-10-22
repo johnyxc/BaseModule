@@ -1,16 +1,20 @@
 #ifndef __MEMORY_HPP_2015_07_14__
 #define __MEMORY_HPP_2015_07_14__
+
 //	封装内存分配、对象创建接口
 #include <stdlib.h>
 #include <string.h>
 #include <repeat.hpp>
 #include <mem_pool.hpp>
-#include <new>
+//#include <new>
+#include <test.h>
 
 static void* mem_alloc(unsigned int size)
 {
 	//return bas::detail::mem_pool_manager_t::instance()->alloc(size);
-	return malloc(size);
+	void* p = malloc(size);
+	//insert_pointer(p);
+	return p;
 }
 
 static void* mem_zalloc(unsigned int size)
@@ -18,12 +22,14 @@ static void* mem_zalloc(unsigned int size)
 	//void* p = bas::detail::mem_pool_manager_t::instance()->alloc(size);
 	void* p = malloc(size);
 	memset(p, 0, size);
+	//insert_pointer(p);
 	return p;
 }
 
 static void mem_free(void* ptr)
 {
 	//bas::detail::mem_pool_manager_t::instance()->free(ptr);
+	//remove_pointer(ptr);
 	free(ptr);
 }
 

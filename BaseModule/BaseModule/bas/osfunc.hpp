@@ -50,6 +50,12 @@ static bool try_lock(HMUTEX mutex)
 	return ::TryEnterCriticalSection((CRITICAL_SECTION*)mutex);
 }
 
+static int get_own_count(HMUTEX mutex)
+{
+	CRITICAL_SECTION* cs = (CRITICAL_SECTION*)mutex;
+	return cs->RecursionCount;
+}
+
 static void unlock(HMUTEX mutex)
 {
 	::LeaveCriticalSection((CRITICAL_SECTION*)mutex);

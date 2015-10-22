@@ -12,6 +12,7 @@ namespace bas
 	{
 		struct set_timer_info : bio_bas_t<set_timer_info>
 		{
+			~set_timer_info() {}
 			function<void ()> timer_cb_;
 		};
 

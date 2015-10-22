@@ -576,7 +576,6 @@ namespace bas
 				}
 				else
 				{
-					send_buf_->clear();
 					send_buf_->buffer_alloc_buf(len);
 					mem_copy((void*)send_buf_->buffer_get_buf(), (void*)buf, len);
 					send_buf_->buffer_set_len(len);
@@ -665,6 +664,7 @@ namespace bas
 				if(send_buf_->buffer_get_pro_len() == send_buf_->buffer_get_len())
 				{	//	所有数据发送完毕
 					send_cb_(send_buf_->buffer_get_len(), 0);
+					send_buf_->clear();
 				}
 				else
 				{	//	继续发送
@@ -926,6 +926,7 @@ namespace bas
 				}
 				else
 				{	//	连接失败
+					::shutdown(ci->sock, SD_BOTH);
 					::closesocket(ci->sock);
 					ci->cb(0, -1);
 				}

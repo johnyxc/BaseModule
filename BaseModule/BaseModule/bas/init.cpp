@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include <init.h>
 #include <set>
 #ifdef _WIN32
@@ -16,9 +17,10 @@
 #include <mem_pool.hpp>
 //////////////////////////////////////////////////////////////////////////
 
+struct test_tag;
 bas::detail::thread_pool_t* bas::detail::thread_pool_t::self_ = 0;
-bas::detail::mem_pool_manager_t* bas::detail::mem_pool_manager_t::self_ = 0;
-std::set<void*>* g_pointer_set;
+//bas::detail::mem_pool_manager_t* bas::detail::mem_pool_manager_t::self_ = 0;
+std::vector<test_tag*>* g_pointer_map;
 
 void init(int count)
 {
@@ -29,7 +31,7 @@ void init(int count)
 #else
 #endif
 
-	g_pointer_set = new std::set<void*>;
+	g_pointer_map = new std::vector<test_tag*>;
 	bas::detail::thread_pool_t* tp = bas::default_thread_pool();
 	tp->set_thread_count(count);
 	tp->run();
@@ -45,7 +47,7 @@ void uninit()
 #else
 #endif
 
-	delete g_pointer_set;
+	delete g_pointer_map;
 	bas::detail::thread_pool_t* tp = bas::default_thread_pool();
 	tp->stop();
 }

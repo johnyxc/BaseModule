@@ -32,7 +32,7 @@ namespace bas
 	public : \
 		auto_ptr() { pwt_ = mem_create_object<ptr_wrapper_t<T> >(); } \
 		auto_ptr(T* o) : pwt_() { pwt_ = mem_create_object<ptr_wrapper_t<T> >(o); } \
-		auto_ptr(ptr_wrapper_t<T>* pwt) { pwt_ = pwt; pwt_->retain(); } \
+		auto_ptr(ptr_wrapper_t<T>* pwt) { if(pwt_) pwt_->release(); pwt_ = pwt; pwt_->retain(); } \
 		~auto_ptr() { if(pwt_) pwt_->release(); } \
 		auto_ptr(const auto_ptr& ap) { pwt_ = ap.pwt_; pwt_->retain(); } \
 		auto_ptr& operator = (const auto_ptr& ap) { pwt_ = ap.pwt_; pwt_->retain(); return *this; } \
