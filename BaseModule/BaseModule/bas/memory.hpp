@@ -5,32 +5,29 @@
 #include <stdlib.h>
 #include <string.h>
 #include <repeat.hpp>
+#include <memory.hpp>
 #include <mem_pool.hpp>
-//#include <new>
-#include <test.h>
+#include <new>
 
 static void* mem_alloc(unsigned int size)
 {
-	//return bas::detail::mem_pool_manager_t::instance()->alloc(size);
-	void* p = malloc(size);
-	//insert_pointer(p);
+	//void* p = malloc(size);
+	void* p = bas::detail::mem_pool_manager_t::instance()->alloc(size);
 	return p;
 }
 
 static void* mem_zalloc(unsigned int size)
 {
-	//void* p = bas::detail::mem_pool_manager_t::instance()->alloc(size);
-	void* p = malloc(size);
+	void* p = bas::detail::mem_pool_manager_t::instance()->alloc(size);
+	//void* p = malloc(size);
 	memset(p, 0, size);
-	//insert_pointer(p);
 	return p;
 }
 
 static void mem_free(void* ptr)
 {
-	//bas::detail::mem_pool_manager_t::instance()->free(ptr);
-	//remove_pointer(ptr);
-	free(ptr);
+	bas::detail::mem_pool_manager_t::instance()->free(ptr);
+	//free(ptr);
 }
 
 static char* mem_strdup(const char* str)

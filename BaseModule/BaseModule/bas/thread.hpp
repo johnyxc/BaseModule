@@ -59,7 +59,7 @@ namespace bas
 
 		private :
 #ifdef _WIN32
-			static DWORD WINAPI _stdcall thread_wrap(LPVOID param)
+			static DWORD WINAPI thread_wrap(LPVOID param)
 			{
 				thread_t* pThis = (thread_t*)param;
 				pThis->fo_();

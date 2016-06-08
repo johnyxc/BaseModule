@@ -17,10 +17,8 @@
 #include <mem_pool.hpp>
 //////////////////////////////////////////////////////////////////////////
 
-struct test_tag;
 bas::detail::thread_pool_t* bas::detail::thread_pool_t::self_ = 0;
-//bas::detail::mem_pool_manager_t* bas::detail::mem_pool_manager_t::self_ = 0;
-std::vector<test_tag*>* g_pointer_map;
+bas::detail::mem_pool_manager_t* bas::detail::mem_pool_manager_t::self_ = 0;
 
 void init(int count)
 {
@@ -31,13 +29,12 @@ void init(int count)
 #else
 #endif
 
-	g_pointer_map = new std::vector<test_tag*>;
 	bas::detail::thread_pool_t* tp = bas::default_thread_pool();
 	tp->set_thread_count(count);
 	tp->run();
 
-	//bas::detail::mem_pool_manager_t* mp = bas::detail::mem_pool_manager_t::instance();
-	//mp->init();
+	bas::detail::mem_pool_manager_t* mp = bas::detail::mem_pool_manager_t::instance();
+	mp->init();
 }
 
 void uninit()
@@ -47,7 +44,6 @@ void uninit()
 #else
 #endif
 
-	delete g_pointer_map;
 	bas::detail::thread_pool_t* tp = bas::default_thread_pool();
 	tp->stop();
 }

@@ -4,6 +4,7 @@
 //////////////////////////////////////////////////////////////////////////
 //	一些句柄定义
 typedef void* HMUTEX;
+typedef void* HEVENT;
 
 //////////////////////////////////////////////////////////////////////////
 //	实现
@@ -59,6 +60,31 @@ static int get_own_count(HMUTEX mutex)
 static void unlock(HMUTEX mutex)
 {
 	::LeaveCriticalSection((CRITICAL_SECTION*)mutex);
+}
+
+static HEVENT get_event_hdl(bool manual_rst, bool init_stat)
+{
+	return (HEVENT)CreateEvent(0, manual_rst, init_stat, 0);
+}
+
+static void release_event_hdl(HEVENT evt)
+{
+	CloseHandle(evt);
+}
+
+static void set_event(HEVENT evt)
+{
+	SetEvent(evt);
+}
+
+static void reset_event(HEVENT evt)
+{
+	ResetEvent(evt);
+}
+
+static void event_wait(HEVENT evt)
+{
+	WaitForSingleObject(evt, INFINITE);
 }
 
 static void bas_sleep(unsigned int ms)

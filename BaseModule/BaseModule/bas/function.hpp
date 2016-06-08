@@ -44,15 +44,6 @@ namespace bas
 
 		public :
 			virtual RT operator ()() { if(fun_) return fun_(); return RT(); }
-			virtual RT operator ()(int) { return RT(); }
-			virtual RT operator ()(int, int) { return RT(); }
-			virtual RT operator ()(int, int, int) { return RT(); }
-			virtual RT operator ()(int, int, int, int) { return RT(); }
-			virtual RT operator ()(int, int, int, int, int) { return RT(); }
-			virtual RT operator ()(int, int, int, int, int, int) { return RT(); }
-			virtual RT operator ()(int, int, int, int, int, int, int) { return RT(); }
-			virtual RT operator ()(int, int, int, int, int, int, int, int) { return RT(); }
-			virtual RT operator ()(int, int, int, int, int, int, int, int, int) { return RT(); }
 
 		public :
 			FUN fun_;
@@ -72,15 +63,6 @@ namespace bas
 
 		public :
 			virtual RT operator ()() { if(self_&&fun_) return (self_->*fun_)(); return RT(); }
-			virtual RT operator ()(int) { return RT(); }
-			virtual RT operator ()(int, int) { return RT(); }
-			virtual RT operator ()(int, int, int) { return RT(); }
-			virtual RT operator ()(int, int, int, int) { return RT(); }
-			virtual RT operator ()(int, int, int, int, int) { return RT(); }
-			virtual RT operator ()(int, int, int, int, int, int) { return RT(); }
-			virtual RT operator ()(int, int, int, int, int, int, int) { return RT(); }
-			virtual RT operator ()(int, int, int, int, int, int, int, int) { return RT(); }
-			virtual RT operator ()(int, int, int, int, int, int, int, int, int) { return RT(); }
 
 		public :
 			CFUN fun_;

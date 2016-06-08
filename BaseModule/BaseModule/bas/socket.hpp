@@ -5,7 +5,7 @@
 #include <auto_ptr.hpp>
 #include <thread.hpp>
 #include <thread_pool.hpp>
-#include <mem_pool.hpp>
+//#include <mem_pool.hpp>
 #include <error_def.hpp>
 #include <vector>
 #include <algorithm>
@@ -28,6 +28,11 @@
 
 SET_MODULE_ERR_BAS(mod_sock, 0)
 BEGIN_ERROR_CODE(SOCK)
+DEFINE_ERROR_CODE(SOCK_HANDEL_ERR, mod_sock, 1);
+DEFINE_ERROR_CODE(RESOLVE_ERR, mod_sock, 2);
+DEFINE_ERROR_CODE(CONNECT_ERR, mod_sock, 3);
+DEFINE_ERROR_CODE(READ_ERR, mod_sock, 4);
+DEFINE_ERROR_CODE(WRITE_ERR, mod_sock, 5);
 END_ERROR_CODE()
 
 namespace bas
@@ -97,12 +102,16 @@ namespace bas
 #ifdef _WIN32
 				unsigned long flag = 1;
 				::ioctlsocket(sock, FIONBIO, &flag);
-				::setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (const char*)&flag, sizeof(flag));
 #else
 				int flag = 1;
 				::fcntl(sock, F_SETFD, O_NONBLOCK);
-				::setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (const void*)&flag, sizeof(flag));
 #endif
+			}
+
+			static void set_no_delay(SOCKET_FD sock)
+			{
+				int flag = 1;
+				::setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (const char*)&flag, sizeof(flag));
 			}
 
 			static void set_reuse(SOCKET_FD sock)
@@ -357,6 +366,7 @@ namespace bas
 
 				do_send_(send_buf, sizeof(frame_header) + fh.frame_len, false);
 				mem_free((void*)send_buf);
+				mem_free((void*)buf);
 			}
 
 			void i_on_recv(int bt, char* recv_buf, int recv_len)
@@ -637,7 +647,7 @@ namespace bas
 					0);
 				if(bt <= 0)
 				{	//	错误事件
-					i_err_occur(1, 0);
+					i_err_occur(ERROR_CODE(SOCK, READ_ERR), 0);
 					return;
 				}
 
@@ -663,8 +673,9 @@ namespace bas
 			{
 				if(send_buf_->buffer_get_pro_len() == send_buf_->buffer_get_len())
 				{	//	所有数据发送完毕
-					send_cb_(send_buf_->buffer_get_len(), 0);
-					send_buf_->clear();
+					int len = send_buf_->buffer_get_len();
+					if(send_buf_) send_buf_->clear();
+					send_cb_(len, 0);
 				}
 				else
 				{	//	继续发送
@@ -674,7 +685,7 @@ namespace bas
 						0);
 					if(bt <= 0)
 					{
-						i_err_occur(1, 0);
+						i_err_occur(ERROR_CODE(SOCK, WRITE_ERR), 0);
 						return;
 					}
 					send_buf_->buffer_set_pro_len(send_buf_->buffer_get_pro_len() + bt);
@@ -759,9 +770,8 @@ namespace bas
 			bool asyn_resolve(const char* url, resolve_callback cb)
 			{
 				resolve_info* ri = mem_create_object<resolve_info>();
-				int len = strlen(url);
-				strncpy(ri->url, url, len);
-				ri->url[len] = '\0';
+				strncpy(ri->url, url, sizeof(ri->url) - 1);
+				ri->url[sizeof(ri->url) - 1] = '\0';
 				ri->cb	= cb;
 
 				thread_t* trd = mem_create_object<thread_t>(bind(&resolver_t::i_on_resolve, bas::retain(this), ri));
@@ -778,7 +788,7 @@ namespace bas
 					struct hostent* host = gethostbyname(ri->url);
 					if(!host) 
 					{
-						ri->cb(std::vector<auto_ptr<char> >(), -1);
+						ri->cb(std::vector<auto_ptr<char> >(), ERROR_CODE(SOCK, RESOLVE_ERR));
 						mem_delete_object(ri);
 						return;
 					}
@@ -790,7 +800,7 @@ namespace bas
 						auto_ptr<char> addr = (char*)mem_zalloc(16);
 						char* ip_addr = inet_ntoa(*(in_addr*)host->h_addr_list[idx++]);
 						if(!ip_addr) continue;
-						strncpy(addr.raw_ptr(), ip_addr, strlen(ip_addr));
+						strncpy(addr.raw_ptr(), ip_addr, 15);
 						addr_list.push_back(addr);
 					}
 					ri->cb(addr_list, 0);
@@ -805,10 +815,12 @@ namespace bas
 			typedef function<void (socket_t*, int)> connect_callback;
 			struct connect_info
 			{
-				connect_info() : sock(-1), timeout() {}
+				connect_info() : sock(-1), timeout(), err(-1) {}
 				SOCKET_FD			sock;
 				connect_callback	cb;
 				unsigned int		timeout;
+				int					err;
+				sockaddr_in			sock_addr;
 			};
 
 		public :
@@ -820,18 +832,17 @@ namespace bas
 			{
 				if(!ip || port == 0) { return false; }
 				if(check_url(ip)) {
-					i_resolve(ip, port, cb, timeout);
+					return i_resolve(ip, port, cb, timeout);
 				} else {
-					i_connect(ip, port, cb, timeout);
+					return i_connect(ip, port, cb, timeout);
 				}
-				return true;
 			}
 
 		private :
 			bool check_url(const char* ip)
 			{
 				int len = strlen(ip);
-				for(unsigned int i = 0; i < len; i++)
+				for(int i = 0; i < len; i++)
 				{
 					if((ip[i] >= 'a' && ip[i] <= 'z') ||
 						(ip[i] >= 'A' && ip[i] <= 'Z')) { return true; }
@@ -847,7 +858,7 @@ namespace bas
 			bool i_connect(const char* ip, unsigned short port, connect_callback cb, unsigned int timeout)
 			{
 #ifdef _WIN32
-				SOCKET_FD sock = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+				SOCKET_FD sock = ::socket(AF_INET, SOCK_STREAM, 0);
 				if(sock == INVALID_SOCKET) return false;
 
 				sockaddr_in addr;
@@ -863,13 +874,12 @@ namespace bas
 				inet_pton(AF_INET, ip, &addr.sin_addr);
 				addr.sin_port = htons(port);
 #endif
-				socket_base_t::set_non_block(sock);
-				::connect(sock, (struct sockaddr*)&addr, sizeof(addr));
-
 				connect_info* ci = mem_create_object<connect_info>();
-				ci->sock = sock;
-				ci->cb	 = cb;
+				ci->sock	= sock;
+				ci->cb		= cb;
 				ci->timeout = timeout;
+				ci->err		= 0;
+				ci->sock_addr = addr;
 
 				thread_t* trd = mem_create_object<thread_t>(bind(&connector_t::i_on_connect, bas::retain(this), ci));
 				trd->run();
@@ -879,36 +889,68 @@ namespace bas
 
 			void i_on_resolve(std::vector<auto_ptr<char> > addr, int err, unsigned short port, connect_callback cb, unsigned int timeout)
 			{
-				if(err) { cb(0, -1); return; }
+				if(err) { cb(0, err); return; }
 				i_connect(addr[0].raw_ptr(), port, cb, timeout);
 			}
 
 			//	Windows & Linux 都使用 select 模型
 			void i_on_connect(connect_info* ci)
 			{
-				if(ci->sock == -1) mem_delete_object(ci);
+				if(ci->sock == -1)
+				{
+					ci->cb(0, ERROR_CODE(SOCK, SOCK_HANDEL_ERR));
+					mem_delete_object(ci);
+					return;
+				}
 
+				socket_base_t::set_reuse(ci->sock);
+				int err = ::connect(ci->sock, (struct sockaddr*)&ci->sock_addr, sizeof(ci->sock_addr));
+				if(err == -1)
+				{
+					ci->cb(0, ERROR_CODE(SOCK, CONNECT_ERR));
+					closesocket(ci->sock);
+					mem_delete_object(ci);
+					return;
+				}
+
+				socket_base_t::set_non_block(ci->sock);
+				socket_base_t::set_no_delay(ci->sock);
+
+				socket_t* sock = mem_create_object<socket_t>();
+				sock->bind_socket(ci->sock);
+				ci->cb(sock, 0);
+
+				/*
 				timeval tv = {};
 				tv.tv_usec = 1;
 				if(ci->timeout > 1) tv.tv_usec = ci->timeout * 1000;
 
-				fd_set rw_fd, tmp_rw_fd;
-				FD_ZERO(&rw_fd);
-				FD_SET(ci->sock, &rw_fd);
-				tmp_rw_fd = rw_fd;
+				fd_set w_fd, tmp_w_fd, r_fd;
+				FD_ZERO(&w_fd);
+				FD_ZERO(&tmp_w_fd);
+				FD_ZERO(&r_fd);
+				FD_SET(ci->sock, &w_fd);
+				FD_SET(ci->sock, &r_fd);
+				tmp_w_fd = w_fd;
 
                 int res = -1;
-#ifdef _WIN32
-				res = ::select(0, 0, &tmp_rw_fd, 0, &tv);
-#else
-                res = ::select(ci->sock+1, 0, &tmp_rw_fd, 0, &tv);
-#endif
+                res = ::select(ci->sock+1, &r_fd, &tmp_w_fd, 0, &tv);
 				if(res > 0)
 				{
 #ifdef _WIN32
-                    if(FD_ISSET(rw_fd.fd_array[0], &tmp_rw_fd))
+					if(FD_ISSET(ci->sock, &r_fd) || FD_ISSET(ci->sock, &tmp_w_fd))
+                    //if(FD_ISSET(w_fd.fd_array[0], &tmp_w_fd))
 					{
-						if(rw_fd.fd_array[0] == ci->sock)
+						int err = 0;
+						socklen_t len = (socklen_t)sizeof(err);
+						if(getsockopt(ci->sock, SOL_SOCKET, SO_ERROR, (char*)&err, &len) < 0)
+						{
+							::shutdown(ci->sock, SD_BOTH);
+							::closesocket(ci->sock);
+							ci->cb(0, -1);
+						}
+						else
+					//	if(w_fd.fd_array[0] == ci->sock)
 						{	//	连接成功
 							socket_t* sock = mem_create_object<socket_t>();
 							sock->bind_socket(ci->sock);
@@ -918,9 +960,9 @@ namespace bas
 #else
                     if(FD_ISSET(ci->sock, &tmp_rw_fd))
 					{   //	连接成功
-                        socket_t sock;
-                        sock.bind_socket(ci->sock);
-                        ci->cb(sock, 0);
+						socket_t* sock = mem_create_object<socket_t>();
+						sock->bind_socket(ci->sock);
+						ci->cb(sock, 0);
 					}
 #endif
 				}
@@ -930,6 +972,7 @@ namespace bas
 					::closesocket(ci->sock);
 					ci->cb(0, -1);
 				}
+				*/
 				mem_delete_object(ci);
 			}
 
@@ -955,7 +998,7 @@ namespace bas
 			bool asyn_accept(const char* ip, unsigned short port, int backlog = 1024)
 			{
 #ifdef _WIN32
-				sock_ = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+				sock_ = ::socket(AF_INET, SOCK_STREAM, 0);
 #else
 				sock_ = ::socket(AF_INET, SOCK_STREAM, 0);
 #endif
@@ -971,6 +1014,7 @@ namespace bas
 				}
 
 				socket_base_t::set_non_block(sock_);
+				socket_base_t::set_no_delay(sock_);
 				socket_base_t::set_reuse(sock_);
 
 				if(::bind(sock_, (struct sockaddr*)&addr, sizeof(addr)) != 0) return false;

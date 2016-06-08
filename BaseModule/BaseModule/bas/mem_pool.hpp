@@ -95,10 +95,8 @@ namespace bas
 				return (char*)cur + sizeof(alloc_unit);
 			}
 
-			//	Œ¥≤‚Œ”√
 			void* realloc_buffer(void* old_buf, int new_size)
 			{
-				/*
 				alloc_unit* cur = (alloc_unit*)((char*)old_buf - sizeof(alloc_unit));
 				if(new_size <= cur->size) return old_buf;
 
@@ -128,7 +126,6 @@ namespace bas
 
 					return old_buf;
 				}
-				*/
 
 				return 0;
 			}
@@ -320,9 +317,9 @@ namespace bas
 				if(!new_buf)
 				{
 					int size = block->get_unit_size(old_buf);
-					block->free_buffer(old_buf);
 					new_buf = this->alloc(new_size);
 					if(new_buf) memmove(new_buf, old_buf, size);
+					block->free_buffer(old_buf);
 				}
 				unlock(mutex_);
 

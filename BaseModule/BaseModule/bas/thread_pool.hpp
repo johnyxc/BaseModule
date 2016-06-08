@@ -29,34 +29,39 @@ namespace bas
 			//	线程核心结构
 			struct pt_param
 			{
-				pt_param() : pthread(), pthread_get(), pbase(), alive(false) {}
-				thread_t* pthread;
+				pt_param() : pthread_get(), alive(false) {}
 				thread_t* pthread_get;
-				event_base* pbase;
 				bool alive;
 			};
 
 			//	一次性事件结构
 			struct exe_param
 			{
-				ONCE_FUN* pfo;
+				ONCE_FUN pfo;
 				strand_t* strand;
 				long long time;
 				friend bool operator < (const exe_param& a, const exe_param& b) { return a.time < b.time; }
 			};
 
 		public :
-			thread_pool_t() : count_(2), cur_idx_(), mutex_(), list_mutex_(), own_list_mutex_(), build_thread_(), build_thread_alive_(false)
+			thread_pool_t() : pbase_(),
+				base_thread_(),
+				base_thread_alive_(false),
+				count_(2),
+				list_mutex_(),
+				own_list_mutex_(),
+				build_thread_(),
+				build_thread_alive_(false)
 			{
-				mutex_			= get_mutex();
 				list_mutex_		= get_mutex();
 				own_list_mutex_ = get_mutex();
+				evt_			= get_event_hdl(false, false);
 			}
 			~thread_pool_t()
 			{
-				if(mutex_)			release_mutex(mutex_);
 				if(list_mutex_)		release_mutex(list_mutex_);
 				if(own_list_mutex_) release_mutex(own_list_mutex_);
+				if(evt_)			release_event_hdl(evt_);
 			}
 
 		public :
@@ -67,17 +72,20 @@ namespace bas
 
 			void run()
 			{
+				pbase_ = event_base_new();
+				base_thread_alive_ = true;
+				base_thread_ = mem_create_object<thread_t>(bind(&thread_pool_t::i_on_thread, bas::retain(this)));
+				build_thread_alive_ = true;
+				build_thread_ = mem_create_object<thread_t>(bind(&thread_pool_t::i_on_thread_build, bas::retain(this)));
+
 				for(int i = 0; i < count_; i++)
 				{
 					pthread_[i].alive = true;
-					pthread_[i].pbase = event_base_new();
-					pthread_[i].pthread = mem_create_object<thread_t>(bind(&thread_pool_t::i_on_thread, bas::retain(this), &pthread_[i]));
 					pthread_[i].pthread_get = mem_create_object<thread_t>(bind(&thread_pool_t::i_on_thread_get, bas::retain(this), &pthread_[i]));
-					pthread_[i].pthread->run();
 					pthread_[i].pthread_get->run();
 				}
-				build_thread_alive_ = true;
-				build_thread_ = mem_create_object<thread_t>(bind(&thread_pool_t::i_on_thread_build, bas::retain(this)));
+
+				base_thread_->run();
 				build_thread_->run();
 			}
 
@@ -86,23 +94,27 @@ namespace bas
 				for(int i = 0; i < count_; i++)
 				{
 					pthread_[i].alive = false;
-					pthread_[i].pthread->join();
 					pthread_[i].pthread_get->join();
-					mem_delete_object(pthread_[i].pthread);
 					mem_delete_object(pthread_[i].pthread_get);
 				}
+
+				base_thread_alive_ = false;
 				build_thread_alive_ = false;
+				event_base_loopexit(pbase_, 0);
+				base_thread_->join();
 				build_thread_->join();
+				mem_delete_object(base_thread_);
 				mem_delete_object(build_thread_);
 			}
 
+			//	通过此函数投递的函数对象需要提供 strand 参数
+			//	同一个 strand 下的函数对象保证串行执行，即使在多线程环境下也是如此
 			void post_call(const function<void ()> fo, strand_t* strand)
 			{
 				if(!strand) return;
 
 				exe_param ep = {};
-				ep.pfo = mem_create_object<ONCE_FUN>();
-				*ep.pfo = fo;
+				ep.pfo = fo;
 				ep.strand = strand;
 				ep.strand->retain();
 				ep.time = GetTickCount();
@@ -123,40 +135,42 @@ namespace bas
 				unlock(own_list_mutex_);
 			}
 
+			//	通过此函数投递的函数对象执行顺序不定
+			//	且在多线程环境下存在并发执行的可能
 			void post(const function<void ()> fo, int ms)
 			{
 				function<void ()>* pfo = mem_create_object<function<void ()> >();
 				*pfo = fo;
-
-				event_base* pbase = thread_pool_t::instance()->pthread_[(atom_inc(&thread_pool_t::instance()->cur_idx_)) % thread_pool_t::instance()->count_].pbase;
-				if(!pbase) return;
 
 				long sec = ms / 1000;
 				long ms_remain = ms - sec * 1000;
 				struct timeval tv;
 				tv.tv_sec = sec;
 				tv.tv_usec = ms_remain * 1000;
-				event_base_once(pbase, 0, EV_TIMEOUT, i_on_event, (void*)pfo, &tv);
+				event_base_once(pbase_, 0, EV_TIMEOUT, i_on_event, (void*)pfo, &tv);
 			}
 
+			//	创建一个 io 事件
 			event* get_event(evutil_socket_t sock, short type, const STANDARD_FUN& fo)
 			{
 				STANDARD_FUN* pfo = mem_create_object<STANDARD_FUN>();
 				*pfo = fo;
-
-				event_base* pbase = pthread_[(atom_inc(&cur_idx_)) % count_].pbase;
-				event* evt = event_new(pbase, sock, type, i_on_io_event, pfo);
-
+				event* evt = event_new(pbase_, sock, type, i_on_io_event, pfo);
 				return evt;
 			}
 
+			//	一般 io 事件通过此函数投递执行
 			void post(event* evt)
 			{
-				lock(mutex_);
 				event_add(evt, 0);
-				unlock(mutex_);
 			}
 
+			void post(event* evt, struct timeval* tv)
+			{
+				event_add(evt, tv);
+			}
+
+			//	释放由 get_event 创建的 io 事件
 			void remove(event* evt)
 			{
 				STANDARD_FUN* pfo = (STANDARD_FUN*)event_get_callback_arg(evt);
@@ -168,22 +182,21 @@ namespace bas
 		private :
 			//	线程执行体
 			//	这是 libevent 使用的线程，是此对象的核心
-			//	所有的 io 或内部一次性事件都由此线程驱动
-			void i_on_thread(pt_param* pt)
+			//	所有的 io 或内部非 strand 一次性事件都由此线程驱动
+			void i_on_thread()
 			{
-				if(!pt) return;
 				printf("Thread Start Up\n");
 				{	//	libevent 有个非常奇怪的问题, 有未响应事件时,
 					//	一次性事件投递无效, 这里强制让一次性事件循环,
 					//	以驱动其他逻辑事件, 将来有时间继续排查此Bug.
 					struct timeval tv;
-					tv.tv_sec = 1;
-					tv.tv_usec = 0;
-					event_base_once(pt->pbase, 0, EV_TIMEOUT, i_on_helper, (void*)pt->pbase, &tv);
+					tv.tv_sec = 0;
+					tv.tv_usec = 10;
+					event_base_once(pbase_, 0, EV_TIMEOUT, i_on_helper, 0, &tv);
 				}
-				while(pt->alive)
+				while(base_thread_alive_)
 				{
-					event_base_dispatch(pt->pbase);
+					event_base_dispatch(pbase_);
 					bas_sleep(1);
 				}
 				printf("Thread Exit\n");
@@ -212,19 +225,18 @@ namespace bas
 					else
 					{
 						unlock(list_mutex_);
-						bas_sleep(1);
+						event_wait(evt_);
 						continue;
 					}
 
-					(*ep.pfo)();
+					ep.pfo();
 					ep.strand->leave_section();
 					ep.strand->release();
-					mem_delete_object(ep.pfo);
 				}
 				printf("Thread Get Exit\n");
 			}
 
-			//	单独一个线程用于建立起优先队列
+			//	单独一个线程用于建立优先队列
 			//	属于同一个 strand 的函数对象总是
 			//	互斥的，不会同时出现在优先队列中
 			void i_on_thread_build()
@@ -234,29 +246,46 @@ namespace bas
 				{
 					lock(own_list_mutex_);
 					std::map<strand_t*, std::list<exe_param> >::iterator iter;
-					for(iter = own_event_list_.begin(); iter != own_event_list_.end(); ++iter)
+					for(iter = own_event_list_.begin(); iter != own_event_list_.end(); )
 					{
 						if(iter->first->get_section_own_count() == 0)
 						{
 							exe_param ep = {};
+							iter->first->enter_section();
 							if(iter->second.size())
 							{
-								iter->first->enter_section();
 								ep = iter->second.front();
 								iter->second.pop_front();
+								if(iter->second.empty()) {
+									own_event_list_.erase(iter++);
+								} else {
+									++iter;
+								}
 							}
 							else
 							{
 								iter->first->leave_section();
+								own_event_list_.erase(iter++);
+								unlock(own_list_mutex_);
+								continue;
 							}
 
 							lock(list_mutex_);
-							if(ep.pfo) event_list_.push(ep);
+							event_list_.push(ep);
 							unlock(list_mutex_);
+							set_event(evt_);
+						}
+						else
+						{
+							++iter;
 						}
 					}
 					unlock(own_list_mutex_);
-					bas_sleep(1);
+					if(own_event_list_.empty())
+					{
+						bas_sleep(1);
+						continue;
+					}
 				}
 				printf("Thread Build Exit\n");
 			}
@@ -280,19 +309,19 @@ namespace bas
 
 			static void i_on_helper(evutil_socket_t sock, short type, void* arg)
 			{
-				event_base* pbase = (event_base*)arg;
-
 				struct timeval tv;
 				tv.tv_sec = 0;
-				tv.tv_usec = 1000;
-				event_base_once(pbase, 0, EV_TIMEOUT, i_on_helper, (void*)pbase, &tv);
+				tv.tv_usec = 10;
+				event_base_once(thread_pool_t::instance()->pbase_, 0, EV_TIMEOUT, i_on_helper, 0, &tv);
 			}
 
 		public :
+			event_base*	pbase_;
+			thread_t*	base_thread_;
+			bool		base_thread_alive_;
 			pt_param	pthread_[MAX_THREAD_COUNT];
 			int			count_;
-			long		cur_idx_;
-			HMUTEX		mutex_;
+			HEVENT		evt_;
 			HMUTEX		list_mutex_;
 			HMUTEX		own_list_mutex_;
 			thread_t*	build_thread_;
