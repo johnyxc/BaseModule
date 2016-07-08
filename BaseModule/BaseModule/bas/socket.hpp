@@ -15,6 +15,8 @@
 #include <WinSock2.h>
 #include <WS2tcpip.h>
 #define SOCKET_FD SOCKET
+#define NET_EAGAIN WSAEWOULDBLOCK
+#define NET_ERROR WSAGetLastError()
 #else
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -24,6 +26,8 @@
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #define SOCKET_FD int
+#define NET_EAGAIN EAGAIN
+#define NET_ERROR errno
 #endif
 
 SET_MODULE_ERR_BAS(mod_sock, 0)
@@ -117,7 +121,7 @@ namespace bas
 			static void set_reuse(SOCKET_FD sock)
 			{
 				int flag = 1;
-				setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (const char*)&flag, sizeof(flag));
+				::setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (const char*)&flag, sizeof(flag));
 			}
 		};
 
@@ -492,6 +496,7 @@ namespace bas
 		//	TCP套接字对象
 		//	对于超过 16K 的数据底层会自动分片发送或接收
 		//	分片过程对上层透明
+		//	asyn_send 和 asyn_recv 函数调用限制 : 回调结果之前不允许重复调用
 		struct socket_t : public bio_bas_t<socket_t>, private socket_base_t
 		{
 			typedef function<void (int, int)>	recv_callback;	//	签名：接收长度、错误码
@@ -591,12 +596,20 @@ namespace bas
 					send_buf_->buffer_set_len(len);
 
 					int bt = ::send(sock_, send_buf_->buffer_get_buf(), send_buf_->buffer_get_len(), 0);
+					int err = NET_ERROR;
 					if(bt <= 0)
 					{
-						i_on_clear();
-						return false;
+						if(err != NET_EAGAIN)
+						{	//	错误事件
+							i_on_clear();
+							return false;
+						}
 					}
-					send_buf_->buffer_set_pro_len(send_buf_->buffer_get_pro_len() + bt);
+
+					if(err == 0)
+					{
+						send_buf_->buffer_set_pro_len(send_buf_->buffer_get_pro_len() + bt);
+					}
 
 					//	每次调用都是一次性发送行为
 					default_thread_pool()->post(cur_wr_evt_);
@@ -645,27 +658,38 @@ namespace bas
 					(recv_buf_->buffer_get_buf() + recv_buf_->buffer_get_pro_len()),
 					(recv_buf_->buffer_get_len() - recv_buf_->buffer_get_pro_len()),
 					0);
+				int err = NET_ERROR;
 				if(bt <= 0)
-				{	//	错误事件
-					i_err_occur(ERROR_CODE(SOCK, READ_ERR), 0);
-					return;
+				{
+					if(err != NET_EAGAIN)
+					{	//	错误事件
+						i_err_occur(ERROR_CODE(SOCK, READ_ERR), 0);
+						return;
+					}
 				}
 
-				if(recv_buf_->buffer_get_recv_some())
+				if(err == 0)
 				{
-					recv_cb_(bt, 0);
+					if(recv_buf_->buffer_get_recv_some())
+					{
+						recv_cb_(bt, 0);
+					}
+					else
+					{
+						recv_buf_->buffer_set_pro_len(recv_buf_->buffer_get_pro_len() + bt);
+						if(recv_buf_->buffer_get_pro_len() == recv_buf_->buffer_get_len())
+						{	//	接收完毕
+							recv_cb_(recv_buf_->buffer_get_len(), 0);
+						}
+						else
+						{	//	需要持续接收
+							default_thread_pool()->post(cur_rd_evt_);
+						}
+					}
 				}
 				else
 				{
-					recv_buf_->buffer_set_pro_len(recv_buf_->buffer_get_pro_len() + bt);
-					if(recv_buf_->buffer_get_pro_len() == recv_buf_->buffer_get_len())
-					{	//	接收完毕
-						recv_cb_(recv_buf_->buffer_get_len(), 0);
-					}
-					else
-					{	//	需要持续接收
-						default_thread_pool()->post(cur_rd_evt_);
-					}
+					default_thread_pool()->post(cur_rd_evt_);
 				}
 			}
 
@@ -683,12 +707,21 @@ namespace bas
 						(send_buf_->buffer_get_buf() + send_buf_->buffer_get_pro_len()),
 						(send_buf_->buffer_get_len() - send_buf_->buffer_get_pro_len()),
 						0);
+					int err = NET_ERROR;
 					if(bt <= 0)
 					{
-						i_err_occur(ERROR_CODE(SOCK, WRITE_ERR), 0);
-						return;
+						if(err != NET_EAGAIN)
+						{	//	错误事件
+							i_err_occur(ERROR_CODE(SOCK, WRITE_ERR), 0);
+							return;
+						}
 					}
-					send_buf_->buffer_set_pro_len(send_buf_->buffer_get_pro_len() + bt);
+
+					if(err == 0)
+					{
+						send_buf_->buffer_set_pro_len(send_buf_->buffer_get_pro_len() + bt);
+					}
+
 					default_thread_pool()->post(cur_wr_evt_);
 				}
 			}
@@ -919,6 +952,7 @@ namespace bas
 				socket_t* sock = mem_create_object<socket_t>();
 				sock->bind_socket(ci->sock);
 				ci->cb(sock, 0);
+				sock->release();
 
 				/*
 				timeval tv = {};
@@ -1046,6 +1080,7 @@ namespace bas
 				socket_t* so = mem_create_object<socket_t>();
 				so->bind_socket(client_sock);
 				cb(so, 0);
+				so->release();
 			}
 
 		private :

@@ -31,6 +31,7 @@ namespace bas
 			{
 				pt_param() : pthread_get(), alive(false) {}
 				thread_t* pthread_get;
+				HEVENT evt;
 				bool alive;
 			};
 
@@ -48,6 +49,7 @@ namespace bas
 				base_thread_(),
 				base_thread_alive_(false),
 				count_(2),
+				evt_(),
 				list_mutex_(),
 				own_list_mutex_(),
 				build_thread_(),
@@ -55,7 +57,7 @@ namespace bas
 			{
 				list_mutex_		= get_mutex();
 				own_list_mutex_ = get_mutex();
-				evt_			= get_event_hdl(false, false);
+				evt_ = get_event_hdl(false, false);
 			}
 			~thread_pool_t()
 			{
@@ -81,6 +83,7 @@ namespace bas
 				for(int i = 0; i < count_; i++)
 				{
 					pthread_[i].alive = true;
+					pthread_[i].evt = get_event_hdl(false, false);
 					pthread_[i].pthread_get = mem_create_object<thread_t>(bind(&thread_pool_t::i_on_thread_get, bas::retain(this), &pthread_[i]));
 					pthread_[i].pthread_get->run();
 				}
@@ -94,8 +97,9 @@ namespace bas
 				for(int i = 0; i < count_; i++)
 				{
 					pthread_[i].alive = false;
+					set_event(pthread_[i].evt);
 					pthread_[i].pthread_get->join();
-					mem_delete_object(pthread_[i].pthread_get);
+					pthread_[i].pthread_get->release();
 				}
 
 				base_thread_alive_ = false;
@@ -103,8 +107,8 @@ namespace bas
 				event_base_loopexit(pbase_, 0);
 				base_thread_->join();
 				build_thread_->join();
-				mem_delete_object(base_thread_);
-				mem_delete_object(build_thread_);
+				base_thread_->release();
+				build_thread_->release();
 			}
 
 			//	通过此函数投递的函数对象需要提供 strand 参数
@@ -133,6 +137,8 @@ namespace bas
 					iter->second.push_back(ep);
 				}
 				unlock(own_list_mutex_);
+
+				set_event(evt_);
 			}
 
 			//	通过此函数投递的函数对象执行顺序不定
@@ -225,7 +231,7 @@ namespace bas
 					else
 					{
 						unlock(list_mutex_);
-						event_wait(evt_);
+						event_wait(pt->evt);
 						continue;
 					}
 
@@ -273,7 +279,10 @@ namespace bas
 							lock(list_mutex_);
 							event_list_.push(ep);
 							unlock(list_mutex_);
-							set_event(evt_);
+							for(int i = 0; i < count_; i++)
+							{
+								set_event(pthread_[i].evt);
+							}
 						}
 						else
 						{
@@ -283,7 +292,7 @@ namespace bas
 					unlock(own_list_mutex_);
 					if(own_event_list_.empty())
 					{
-						bas_sleep(1);
+						event_wait(evt_);
 						continue;
 					}
 				}
@@ -321,7 +330,7 @@ namespace bas
 			bool		base_thread_alive_;
 			pt_param	pthread_[MAX_THREAD_COUNT];
 			int			count_;
-			HEVENT		evt_;
+			HMUTEX		evt_;
 			HMUTEX		list_mutex_;
 			HMUTEX		own_list_mutex_;
 			thread_t*	build_thread_;

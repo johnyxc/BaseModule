@@ -41,7 +41,7 @@
 *	SET_MODULE_ERR_BAS(module_sock, 1)
 *	unsigned int fun()
 *	{
-*		unsigned int err = some_3rd_fun();	//	some_3rd_fun返回-1代表成功
+*		int err = some_3rd_fun();	//	some_3rd_fun返回-1代表成功
 *		if(err == -1) err = 0;
 *		return GENERATE_ERROR(module_sock, err);
 *	}

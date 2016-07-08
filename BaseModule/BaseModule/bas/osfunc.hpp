@@ -11,6 +11,7 @@ typedef void* HEVENT;
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <string>
 
 static int atom_inc(long* v)
 {
@@ -92,6 +93,21 @@ static void bas_sleep(unsigned int ms)
     Sleep(ms);
 }
 
+static std::string get_current_module_path()
+{
+	char path[MAX_PATH] = {};
+	GetModuleFileName(0, path, MAX_PATH);
+	std::string tmp_path = path;
+
+	int pos = tmp_path.rfind("\\");
+	if(pos != tmp_path.npos)
+	{
+		return tmp_path.substr(0, pos);
+	}
+
+	return std::string();
+}
+
 struct auto_lock_t
 {
 	auto_lock_t(HMUTEX mtx) : mutex_(mtx) { lock(mutex_); }
@@ -154,6 +170,11 @@ static int atom_exchage(long* t, long v)
 static void bas_sleep(unsigned int ms)
 {
     usleep(ms * 1000);
+}
+
+static std::string get_current_module_path()
+{
+	return std::string();
 }
 
 #endif	//	_WIN32

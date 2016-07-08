@@ -11,28 +11,33 @@
 
 static void* mem_alloc(unsigned int size)
 {
-	//void* p = malloc(size);
-	void* p = bas::detail::mem_pool_manager_t::instance()->alloc(size);
+	void* p = malloc(size);
+	//void* p = bas::detail::mem_pool_manager_t::instance()->alloc(size);
 	return p;
 }
 
 static void* mem_zalloc(unsigned int size)
 {
-	void* p = bas::detail::mem_pool_manager_t::instance()->alloc(size);
-	//void* p = malloc(size);
+	//void* p = bas::detail::mem_pool_manager_t::instance()->alloc(size);
+	void* p = malloc(size);
 	memset(p, 0, size);
 	return p;
 }
 
 static void mem_free(void* ptr)
 {
-	bas::detail::mem_pool_manager_t::instance()->free(ptr);
-	//free(ptr);
+	//bas::detail::mem_pool_manager_t::instance()->free(ptr);
+	free(ptr);
 }
 
 static char* mem_strdup(const char* str)
 {
 	return strdup(str);
+// 	int len = strlen(str);
+// 	char* p = (char*)mem_alloc(len + 1);
+// 	strcpy(p, str);
+// 	p[len] = '\0';
+// 	return p;
 }
 
 static void* mem_copy(void* dst, void const* src, unsigned int size)

@@ -42,7 +42,13 @@ namespace bas
 			void join()
 			{
 #ifdef _WIN32
-				::WaitForSingleObject(handle_, INFINITE);
+				DWORD res = ::WaitForSingleObject(handle_, 500);
+				if(res == WAIT_TIMEOUT)
+				{
+					printf("Force to Kill Thread\n");
+					::SuspendThread(handle_);
+					::TerminateThread(handle_, 0);
+				}
 #else
 				pthread_join(th_, 0);
 #endif

@@ -29,12 +29,12 @@ void init(int count)
 #else
 #endif
 
+	bas::detail::mem_pool_manager_t* mp = bas::detail::mem_pool_manager_t::instance();
+	mp->init();
+
 	bas::detail::thread_pool_t* tp = bas::default_thread_pool();
 	tp->set_thread_count(count);
 	tp->run();
-
-	bas::detail::mem_pool_manager_t* mp = bas::detail::mem_pool_manager_t::instance();
-	mp->init();
 }
 
 void uninit()
@@ -46,6 +46,9 @@ void uninit()
 
 	bas::detail::thread_pool_t* tp = bas::default_thread_pool();
 	tp->stop();
+
+	bas::detail::mem_pool_manager_t* mp = bas::detail::mem_pool_manager_t::instance();
+	mp->uninit();
 }
 
 win32_auto_init::win32_auto_init(int count) { init(count); }
